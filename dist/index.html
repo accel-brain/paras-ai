@@ -1063,5 +1063,14 @@
             setTimeout(handleHashKeyword, 500);
         });
     </script>
+
+<script>
+if (performance.getEntriesByType('navigation').length > 0) {
+    const navigationEntry = performance.getEntriesByType('navigation')[0];
+    if (navigationEntry.type !== 'reload') {
+        window.location.href = window.location.href + '?nocache=' + Date.now();
+    }
+}
+</script>
 </body>
 </html>
