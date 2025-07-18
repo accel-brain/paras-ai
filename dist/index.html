@@ -408,12 +408,49 @@
     <header class="header">
         <nav class="nav container">
             <a href="#" class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6c5ce7"/>
-                    <path d="M2 17L12 22L22 17" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                InfoCuration
+ <svg class="logo-icon" viewBox="22 18 56 56" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="webOptimal1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.9" />
+    </linearGradient>
+    <linearGradient id="webOptimal2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#64748b;stop-opacity:0.9" />
+    </linearGradient>
+    <radialGradient id="centerOptimal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <polygon points="50,20 62,26 62,38 50,44 38,38 38,26" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="62,26 74,32 74,44 62,50 50,44 50,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="62,50 74,56 74,68 62,74 50,68 50,56" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="50,44 62,50 62,62 50,68 38,62 38,50" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="38,38 50,44 50,56 38,62 26,56 26,44" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="38,26 50,32 50,44 38,50 26,44 26,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <circle cx="50" cy="44" r="8" fill="url(#centerOptimal)" stroke="#475569" stroke-width="1.5"/>
+  
+  <circle cx="44" cy="32" r="1.8" fill="#475569"/>
+  <circle cx="56" cy="38" r="1.8" fill="#475569"/>
+  <circle cx="62" cy="56" r="1.8" fill="#475569"/>
+  <circle cx="38" cy="56" r="1.8" fill="#475569"/>
+  <circle cx="32" cy="38" r="1.8" fill="#475569"/>
+  
+  <path d="M46 40 L54 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M54 40 L46 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+  
+  <path d="M50 36 L50 52" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+  <path d="M42 44 L58 44" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+</svg>
+                PARAs AI 分析ログ
             </a>
             <ul class="nav-links">
                 <li><a href="#home">ホーム</a></li>
@@ -607,6 +644,9 @@
 
         // 形態素解析を使用したキーワード検索
         function searchKeyword(keyword) {
+            if (typeof TinySegmenter !== 'undefined') {
+                segmenter = new TinySegmenter();
+            }
             // セグメンターが初期化されているかチェック
             if (!segmenter) {
                 console.error('TinySegmenter not initialized');
