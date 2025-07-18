@@ -363,6 +363,27 @@
             100% { transform: rotate(360deg); }
         }
 
+        .kuromoji-status {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .kuromoji-status.loading {
+            color: #667eea;
+        }
+
+        .kuromoji-status.ready {
+            color: #27ae60;
+        }
+
+        .kuromoji-status.error {
+            color: #e74c3c;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .search-form {
@@ -411,48 +432,39 @@
     <header class="header">
         <nav class="nav container">
             <a href="#" class="logo">
- <svg class="logo-icon" viewBox="22 18 56 56" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="webOptimal1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.9" />
-    </linearGradient>
-    <linearGradient id="webOptimal2" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:0.9" />
-    </linearGradient>
-    <radialGradient id="centerOptimal" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
-    </radialGradient>
-  </defs>
-  
-  <polygon points="50,20 62,26 62,38 50,44 38,38 38,26" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="62,26 74,32 74,44 62,50 50,44 50,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="62,50 74,56 74,68 62,74 50,68 50,56" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="50,44 62,50 62,62 50,68 38,62 38,50" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="38,38 50,44 50,56 38,62 26,56 26,44" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="38,26 50,32 50,44 38,50 26,44 26,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <circle cx="50" cy="44" r="8" fill="url(#centerOptimal)" stroke="#475569" stroke-width="1.5"/>
-  
-  <circle cx="44" cy="32" r="1.8" fill="#475569"/>
-  <circle cx="56" cy="38" r="1.8" fill="#475569"/>
-  <circle cx="62" cy="56" r="1.8" fill="#475569"/>
-  <circle cx="38" cy="56" r="1.8" fill="#475569"/>
-  <circle cx="32" cy="38" r="1.8" fill="#475569"/>
-  
-  <path d="M46 40 L54 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M54 40 L46 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-  
-  <path d="M50 36 L50 52" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
-  <path d="M42 44 L58 44" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
-</svg>
+                <svg class="logo-icon" viewBox="22 18 56 56" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="webOptimal1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.9" />
+                        </linearGradient>
+                        <linearGradient id="webOptimal2" x1="100%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#64748b;stop-opacity:0.9" />
+                        </linearGradient>
+                        <radialGradient id="centerOptimal" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    
+                    <polygon points="50,20 62,26 62,38 50,44 38,38 38,26" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+                    <polygon points="62,26 74,32 74,44 62,50 50,44 50,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+                    <polygon points="62,50 74,56 74,68 62,74 50,68 50,56" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+                    <polygon points="50,44 62,50 62,62 50,68 38,62 38,50" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+                    <polygon points="38,38 50,44 50,56 38,62 26,56 26,44" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+                    <polygon points="38,26 50,32 50,44 38,50 26,44 26,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+                    <circle cx="50" cy="44" r="8" fill="url(#centerOptimal)" stroke="#475569" stroke-width="1.5"/>
+                    <circle cx="44" cy="32" r="1.8" fill="#475569"/>
+                    <circle cx="56" cy="38" r="1.8" fill="#475569"/>
+                    <circle cx="62" cy="56" r="1.8" fill="#475569"/>
+                    <circle cx="38" cy="56" r="1.8" fill="#475569"/>
+                    <circle cx="32" cy="38" r="1.8" fill="#475569"/>
+                    <path d="M46 40 L54 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M54 40 L46 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M50 36 L50 52" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+                    <path d="M42 44 L58 44" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+                </svg>
                 PARAs AI 分析ログ
             </a>
             <ul class="nav-links">
@@ -471,9 +483,14 @@
             <p>過去の分析結果</p>
         </div>
         
+        <div class="kuromoji-status" id="kuromojiStatus">
+            <div class="spinner" style="width: 20px; height: 20px; margin: 0 auto 0.5rem;"></div>
+            <div>Kuromoji形態素解析器を初期化中...</div>
+        </div>
+        
         <div class="search-form">
-            <input type="text" class="search-input" id="searchInput" placeholder="キーワードを入力してください...">
-            <button class="search-button" onclick="performSearch()">検索</button>
+            <input type="text" class="search-input" id="searchInput" placeholder="キーワードを入力してください..." disabled>
+            <button class="search-button" id="searchButton" onclick="performSearch()" disabled>検索</button>
         </div>
         
         <div class="tag-cloud-section">
@@ -488,7 +505,7 @@
     <main class="main-content container">
         <div class="results-info" id="resultsInfo">
             <h2>検索結果</h2>
-            <div class="results-count" id="resultsCount">読み込み中...</div>
+            <div class="results-count" id="resultsCount">Kuromojiとデータを読み込み中...</div>
         </div>
 
         <div id="loadingIndicator" class="loading">
@@ -518,37 +535,123 @@
         </div>
     </footer>
 
-    <!-- TinySegmenter CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-segmenter/0.2.0/tiny-segmenter.min.js"></script>
-
+    <!-- Kuromoji.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/kuromoji/0.1.2/kuromoji.min.js"></script>
+    
     <script>
         let currentData = null;
         let currentKeyword = '';
-        // TinySegmenter instance を格納する変数を宣言（グローバルスコープ）
-        let segmenter = null;
+        let tokenizer = null;
+        let isKuromojiReady = false;
 
-        // TinySegmenterの初期化を待つ関数
-        function initializeTinySegmenter() {
-            return new Promise((resolve) => {
-                const checkSegmenter = () => {
-                    if (typeof TinySegmenter !== 'undefined') {
-                        segmenter = new TinySegmenter();
-                        console.log('TinySegmenter initialized successfully');
-                        resolve();
-                    } else {
-                        console.log('Waiting for TinySegmenter...');
-                        setTimeout(checkSegmenter, 100);
-                    }
-                };
-                checkSegmenter();
+        // Kuromojiトークナイザーの初期化
+        function initializeKuromoji() {
+            const statusElement = document.getElementById('kuromojiStatus');
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            
+            statusElement.className = 'kuromoji-status loading';
+            statusElement.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto 0.5rem;"></div><div>Kuromoji形態素解析器を初期化中...</div>';
+            
+            kuromoji.builder({ dicPath: 'https://cdnjs.cloudflare.com/ajax/libs/kuromoji/0.1.2/dict' }).build((err, _tokenizer) => {
+                if (err) {
+                    console.error('Kuromoji初期化エラー:', err);
+                    statusElement.className = 'kuromoji-status error';
+                    statusElement.innerHTML = '<div>⚠️ Kuromoji形態素解析器の初期化に失敗しました</div>';
+                    return;
+                }
+                
+                tokenizer = _tokenizer;
+                isKuromojiReady = true;
+                
+                statusElement.className = 'kuromoji-status ready';
+                statusElement.innerHTML = '<div>✅ Kuromoji形態素解析器が使用可能です</div>';
+                
+                // 検索機能を有効化
+                searchInput.disabled = false;
+                searchButton.disabled = false;
+                searchInput.placeholder = 'キーワードを入力してください...';
+                
+                // 3秒後にステータスを非表示
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+                
+                console.log('Kuromoji初期化完了');
             });
         }
 
-        // DOMContentLoaded時の処理を修正
-        document.addEventListener('DOMContentLoaded', async function() {
-            // TinySegmenterの初期化を待つ
-            await initializeTinySegmenter();
-        });
+        // 高度な形態素解析を使用したキーワード抽出
+        function extractKeywords(text, minLength = 2) {
+            if (!tokenizer) {
+                console.error('Kuromoji tokenizer not initialized');
+                return [];
+            }
+            
+            const tokens = tokenizer.tokenize(text);
+            const keywords = [];
+            
+            // 意味のある品詞のみを抽出
+            const meaningfulPOS = [
+                '名詞', '動詞', '形容詞', '形容動詞', '副詞', '連体詞'
+            ];
+            
+            // 除外する品詞の詳細
+            const excludePOSDetails = [
+                '助詞', '助動詞', '記号', '補助記号', '代名詞', '数詞', '接続詞', '感動詞',
+                '非自立', '接尾', '数', '代名詞', '非自立'
+            ];
+            
+            // 除外する単語
+            const excludeWords = [
+                'する', 'ある', 'なる', 'いる', 'くる', 'いく', 'みる', 'きく', 'いう', 'かく',
+                'もの', 'こと', 'ため', 'よう', 'とき', 'ところ', 'はず', 'わけ', 'つもり',
+                'の', 'が', 'を', 'に', 'で', 'と', 'から', 'まで', 'より', 'は', 'も',
+                'これ', 'それ', 'あれ', 'どれ', 'この', 'その', 'あの', 'どの',
+                'ここ', 'そこ', 'あそこ', 'どこ', 'こちら', 'そちら', 'あちら', 'どちら'
+            ];
+            
+            tokens.forEach(token => {
+                const surface = token.surface_form;
+                const pos = token.pos;
+                const posDetail1 = token.pos_detail_1;
+                const posDetail2 = token.pos_detail_2;
+                const basicForm = token.basic_form;
+                
+                // 長さチェック
+                if (surface.length < minLength) return;
+                
+                // 除外単語チェック
+                if (excludeWords.includes(surface) || excludeWords.includes(basicForm)) return;
+                
+                // 品詞チェック
+                if (!meaningfulPOS.includes(pos)) return;
+                
+                // 詳細品詞チェック
+                if (excludePOSDetails.some(detail => posDetail1.includes(detail) || posDetail2.includes(detail))) return;
+                
+                // 数字のみの場合は除外
+                if (/^\d+$/.test(surface)) return;
+                
+                // ひらがなのみで2文字以下の場合は除外
+                if (surface.length <= 2 && /^[ひらがな]+$/.test(surface)) return;
+                
+                // 基本形を優先して使用
+                const keyword = basicForm && basicForm !== '*' ? basicForm : surface;
+                
+                keywords.push({
+                    surface: surface,
+                    basic_form: keyword,
+                    pos: pos,
+                    pos_detail_1: posDetail1,
+                    pos_detail_2: posDetail2,
+                    reading: token.reading,
+                    pronunciation: token.pronunciation
+                });
+            });
+            
+            return keywords;
+        }
 
         // 重み付きランダムサンプリングでキーワードを選択
         function getWeightedRandomKeyword() {
@@ -626,6 +729,11 @@
 
         // 検索実行
         function performSearch() {
+            if (!isKuromojiReady) {
+                alert('Kuromoji形態素解析器がまだ初期化されていません。しばらくお待ちください。');
+                return;
+            }
+            
             if (!currentData || !currentData.keyword_dict) {
                 alert('データがまだ読み込まれていません。しばらくお待ちください。');
                 return;
@@ -650,40 +758,56 @@
             }, 500);
         }
 
-        // 形態素解析を使用したキーワード検索
+        // 改良されたキーワード検索（Kuromoji使用）
         function searchKeyword(keyword) {
-            if (typeof TinySegmenter !== 'undefined') {
-                segmenter = new TinySegmenter();
-            }
-            // セグメンターが初期化されているかチェック
-            if (!segmenter) {
-                console.error('TinySegmenter not initialized');
+            if (!tokenizer) {
+                console.error('Kuromoji tokenizer not initialized');
                 return [];
             }
             
             const results = [];
-            const searchMorphemes = segmenter.segment(keyword);
             
-            // 短い形態素（1文字や助詞など）を除外
-            const filteredMorphemes = searchMorphemes.filter(morpheme => 
-                morpheme.length > 1 && 
-                !['の', 'に', 'を', 'は', 'が', 'で', 'と', 'から', 'まで', 'より', 'について', 'による', 'として'].includes(morpheme)
+            // 検索キーワードを形態素解析
+            const searchKeywords = extractKeywords(keyword);
+            console.log('検索キーワード:', keyword);
+            console.log('Kuromoji解析結果:', searchKeywords);
+            
+            // 基本形とsurfaceの両方でキーワードを抽出
+            const searchTerms = new Set();
+            searchKeywords.forEach(kw => {
+                searchTerms.add(kw.basic_form);
+                searchTerms.add(kw.surface);
+            });
+            
+            // 短すぎるキーワードを除外
+            const filteredSearchTerms = Array.from(searchTerms).filter(term => 
+                term && term.length > 1 && term !== '*'
             );
             
-            console.log('検索キーワード:', keyword);
-            console.log('形態素解析結果:', searchMorphemes);
-            console.log('フィルター後:', filteredMorphemes);
+            console.log('フィルター後の検索語:', filteredSearchTerms);
             
             // 1. キーワード辞書での検索
             Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
-                const dictMorphemes = segmenter.segment(dictKeyword);
+                const dictKeywords = extractKeywords(dictKeyword);
                 
-                // いずれかの形態素がマッチするかチェック
-                const hasMatch = filteredMorphemes.some(searchMorpheme =>
-                    dictMorphemes.some(dictMorpheme =>
-                        searchMorpheme === dictMorpheme ||
-                        dictMorpheme.includes(searchMorpheme) ||
-                        searchMorpheme.includes(dictMorpheme)
+                // 辞書キーワードの基本形とsurfaceを取得
+                const dictTerms = new Set();
+                dictKeywords.forEach(kw => {
+                    dictTerms.add(kw.basic_form);
+                    dictTerms.add(kw.surface);
+                });
+                dictTerms.add(dictKeyword); // 元のキーワードも含める
+                
+                // マッチング判定
+                const hasMatch = filteredSearchTerms.some(searchTerm =>
+                    Array.from(dictTerms).some(dictTerm =>
+                        searchTerm === dictTerm ||
+                        dictTerm.includes(searchTerm) ||
+                        searchTerm.includes(dictTerm) ||
+                        // 読み方での一致も考慮
+                        (dictKeywords.some(dk => 
+                            dk.reading && (dk.reading === searchTerm || dk.reading.includes(searchTerm))
+                        ))
                     )
                 );
                 
@@ -697,19 +821,31 @@
             if (currentData.page_title_dict) {
                 Object.keys(currentData.page_title_dict).forEach(filePath => {
                     const title = currentData.page_title_dict[filePath];
-                    const titleMorphemes = segmenter.segment(title);
+                    const titleKeywords = extractKeywords(title);
                     
-                    // タイトルの形態素と検索形態素がマッチするかチェック
-                    const hasTitleMatch = filteredMorphemes.some(searchMorpheme =>
-                        titleMorphemes.some(titleMorpheme =>
-                            searchMorpheme === titleMorpheme ||
-                            titleMorpheme.includes(searchMorpheme) ||
-                            searchMorpheme.includes(titleMorpheme)
+                    // タイトルキーワードの基本形とsurfaceを取得
+                    const titleTerms = new Set();
+                    titleKeywords.forEach(kw => {
+                        titleTerms.add(kw.basic_form);
+                        titleTerms.add(kw.surface);
+                    });
+                    titleTerms.add(title); // 元のタイトルも含める
+                    
+                    // タイトルマッチング判定
+                    const hasTitleMatch = filteredSearchTerms.some(searchTerm =>
+                        Array.from(titleTerms).some(titleTerm =>
+                            searchTerm === titleTerm ||
+                            titleTerm.includes(searchTerm) ||
+                            searchTerm.includes(titleTerm) ||
+                            // 読み方での一致も考慮
+                            (titleKeywords.some(tk => 
+                                tk.reading && (tk.reading === searchTerm || tk.reading.includes(searchTerm))
+                            ))
                         )
                     );
                     
                     if (hasTitleMatch) {
-                        // このfile_pathに関連するweightを取得（複数のキーワードに属している場合は最大値を使用）
+                        // このfile_pathに関連するweightを取得
                         let maxWeight = 0;
                         Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
                             const items = currentData.keyword_dict[dictKeyword];
@@ -809,7 +945,7 @@
 
         // Enterキーで検索
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !this.disabled) {
                 performSearch();
             }
         });
@@ -839,6 +975,11 @@
 
         // キーワード検索を実行する関数
         function executeKeywordSearch(keyword) {
+            if (!isKuromojiReady) {
+                alert('Kuromoji形態素解析器がまだ初期化されていません。しばらくお待ちください。');
+                return;
+            }
+            
             if (!currentData || !currentData.keyword_dict) {
                 alert('データがまだ読み込まれていません。しばらくお待ちください。');
                 return;
@@ -869,21 +1010,147 @@
             }
         }
 
-        // 実際の使用時はdata/keyword_weight.jsonを読み込む関数
+        // キーワードデータを読み込む関数（サンプルデータも含む）
         async function loadKeywordData() {
             try {
+                // 実際の使用時はdata/keyword_weight.jsonを読み込む
                 const response = await fetch('data/keyword_weight.json');
                 const data = await response.json();
                 currentData = data;
                 console.log('キーワードデータを読み込みました');
+                
+                // タグクラウドを生成
+                if (isKuromojiReady) {
+                    generateTagCloud();
+                }
+                
+                // 結果カウントを更新
+                updateResultsCount();
+                
             } catch (error) {
                 console.error('キーワードデータの読み込みに失敗しました:', error);
-                // サンプルデータを使用
+                
+                // サンプルデータを使用（デモ用）
+                currentData = {
+                    keyword_dict: {
+                        "人工知能": [
+                            { file_path: "/ai/intro.html", weight: 10.5 },
+                            { file_path: "/tech/ai-overview.html", weight: 8.2 }
+                        ],
+                        "機械学習": [
+                            { file_path: "/ml/basics.html", weight: 9.8 },
+                            { file_path: "/ai/intro.html", weight: 7.5 }
+                        ],
+                        "深層学習": [
+                            { file_path: "/dl/neural-networks.html", weight: 12.1 },
+                            { file_path: "/ai/advanced.html", weight: 9.3 }
+                        ],
+                        "自然言語処理": [
+                            { file_path: "/nlp/text-analysis.html", weight: 11.0 },
+                            { file_path: "/ai/nlp-intro.html", weight: 8.7 }
+                        ],
+                        "データサイエンス": [
+                            { file_path: "/data/analysis.html", weight: 10.2 },
+                            { file_path: "/research/data-mining.html", weight: 7.8 }
+                        ],
+                        "統計解析": [
+                            { file_path: "/stats/regression.html", weight: 9.1 },
+                            { file_path: "/data/statistics.html", weight: 8.4 }
+                        ],
+                        "Python": [
+                            { file_path: "/programming/python-basics.html", weight: 8.9 },
+                            { file_path: "/ml/python-ml.html", weight: 7.6 }
+                        ],
+                        "JavaScript": [
+                            { file_path: "/web/js-fundamentals.html", weight: 8.3 },
+                            { file_path: "/frontend/modern-js.html", weight: 7.2 }
+                        ],
+                        "ウェブ開発": [
+                            { file_path: "/web/frontend.html", weight: 9.5 },
+                            { file_path: "/development/web-stack.html", weight: 8.1 }
+                        ],
+                        "データベース": [
+                            { file_path: "/db/sql-guide.html", weight: 9.0 },
+                            { file_path: "/backend/database-design.html", weight: 7.9 }
+                        ]
+                    },
+                    page_title_dict: {
+                        "/ai/intro.html": "人工知能入門 - 基礎から応用まで",
+                        "/tech/ai-overview.html": "AI技術の全体像と今後の展望",
+                        "/ml/basics.html": "機械学習の基礎理論と実装",
+                        "/dl/neural-networks.html": "深層学習とニューラルネットワーク",
+                        "/ai/advanced.html": "高度なAI技術と最新研究",
+                        "/nlp/text-analysis.html": "自然言語処理によるテキスト解析",
+                        "/ai/nlp-intro.html": "NLP入門 - 言語理解の仕組み",
+                        "/data/analysis.html": "データサイエンス実践ガイド",
+                        "/research/data-mining.html": "データマイニング手法の比較研究",
+                        "/stats/regression.html": "回帰分析の理論と応用",
+                        "/data/statistics.html": "統計学の基礎と実践的活用",
+                        "/programming/python-basics.html": "Python プログラミング基礎",
+                        "/ml/python-ml.html": "PythonによるML実装入門",
+                        "/web/js-fundamentals.html": "JavaScript基礎講座",
+                        "/frontend/modern-js.html": "モダンJavaScript開発手法",
+                        "/web/frontend.html": "フロントエンド開発の最新トレンド",
+                        "/development/web-stack.html": "Webアプリケーション開発スタック",
+                        "/db/sql-guide.html": "SQL実践ガイド",
+                        "/backend/database-design.html": "効率的なデータベース設計"
+                    }
+                };
+                
+                console.log('サンプルデータを使用します');
+                
+                // タグクラウドを生成
+                if (isKuromojiReady) {
+                    generateTagCloud();
+                }
+                
+                // 結果カウントを更新
+                updateResultsCount();
             }
         }
 
-        // 実際の使用時はこのコメントを外してください
-        loadKeywordData();
+        // 結果カウント表示を更新
+        function updateResultsCount() {
+            const resultsCount = document.getElementById('resultsCount');
+            if (currentData && currentData.keyword_dict) {
+                const totalItems = Object.values(currentData.keyword_dict).reduce((sum, items) => sum + items.length, 0);
+                const uniquePaths = new Set();
+                Object.values(currentData.keyword_dict).forEach(items => {
+                    items.forEach(item => uniquePaths.add(item.file_path));
+                });
+                resultsCount.textContent = `データ準備完了 - ${Object.keys(currentData.keyword_dict).length}キーワード、${uniquePaths.size}ドキュメント`;
+            }
+        }
+
+        // アプリケーション初期化
+        async function initializeApp() {
+            console.log('アプリケーションを初期化中...');
+            
+            // Kuromojiとデータを並行して初期化
+            await Promise.all([
+                initializeKuromoji(),
+                loadKeywordData()
+            ]);
+            
+            console.log('初期化完了');
+        }
+
+        // ページ読み込み時に初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        // Kuromoji準備完了後にタグクラウドを生成
+        function onKuromojiReady() {
+            if (currentData && currentData.keyword_dict) {
+                generateTagCloud();
+            }
+        }
+
+        // グローバルエラーハンドラ
+        window.addEventListener('error', (event) => {
+            console.error('アプリケーションエラー:', event.error);
+        });
     </script>
 </body>
 </html>
