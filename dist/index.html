@@ -989,6 +989,59 @@
         window.addEventListener('error', (event) => {
             console.error('アプリケーションエラー:', event.error);
         });
+
+        // URLハッシュ値からキーワードを抽出して検索する機能
+        function handleHashKeyword() {
+            const hash = window.location.hash;
+            
+            // #keyword=で始まるハッシュをチェック
+            if (hash.startsWith('#keyword=')) {
+                const keyword = decodeURIComponent(hash.substring(9)); // '#keyword='の9文字を除去
+                
+                if (keyword && keyword.trim()) {
+                    const trimmedKeyword = keyword.trim();
+                    console.log('URLハッシュからキーワードを検出:', trimmedKeyword);
+                    
+                    // 入力フォームにキーワードを設定
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = trimmedKeyword;
+                        
+                        // 視覚的フィードバック
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                    
+                    // データが読み込まれている場合は即座に検索実行
+                    if (currentData && currentData.keyword_dict) {
+                        executeKeywordSearch(trimmedKeyword);
+                    } else {
+                        // データ読み込み完了まで待機してから検索実行
+                        const checkDataInterval = setInterval(() => {
+                            if (currentData && currentData.keyword_dict) {
+                                clearInterval(checkDataInterval);
+                                executeKeywordSearch(trimmedKeyword);
+                            }
+                        }, 100);
+                        
+                        // 10秒でタイムアウト
+                        setTimeout(() => {
+                            clearInterval(checkDataInterval);
+                        }, 10000);
+                    }
+                }
+            }
+        }
+        
+        // ページ読み込み時とハッシュ変更時にハッシュキーワードをチェック
+        window.addEventListener('load', handleHashKeyword);
+        window.addEventListener('hashchange', handleHashKeyword);
+        
+        // DOMContentLoaded後にもチェック（初期化との競合回避）
+        document.addEventListener('DOMContentLoaded', () => {
+            // 少し遅延してハッシュをチェック（初期化完了を待つ）
+            setTimeout(handleHashKeyword, 500);
+        });
     </script>
 </body>
 </html>
