@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARAs AI 分析ログ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            line-height: 1.8;
+            color: #2c2c2c;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6c5ce7;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #2c2c2c;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #6c5ce7;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin-top: 100px;
+            padding: 2rem 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #2c2c2c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .search-form {
+            display: flex;
+            max-width: 600px;
+            margin: 0 auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #6c5ce7;
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .search-button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .random-keyword {
+            text-align: center;
+            margin-top: 1rem;
+            color: #666;
+        }
+
+        .random-keyword-btn {
+            background: none;
+            border: 1px solid #6c5ce7;
+            color: #6c5ce7;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .random-keyword-btn:hover {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 0 0 4rem;
+        }
+
+        .results-info {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-info h2 {
+            color: #2c2c2c;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .results-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid #6c5ce7;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c2c2c;
+            margin-bottom: 1rem;
+            display: block;
+            transition: color 0.3s ease;
+        }
+
+        .result-card:hover .result-title {
+            color: #6c5ce7;
+        }
+
+        .result-meta {
+            display: none;
+        }
+
+        .result-weight {
+            display: none;
+        }
+
+        .result-url {
+            display: none;
+        }
+
+        .result-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .keyword-tag {
+            background: #f0f4f8;
+            color: #2b6cb0;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            border: 1px solid #cbd5e0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6c5ce7;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .search-button {
+                width: 100%;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c2c2c;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer a {
+            color: #6c5ce7;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <a href="#" class="logo">
+<svg class="logo-icon" viewBox="22 18 56 56" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="webOptimal1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.9" />
+    </linearGradient>
+    <linearGradient id="webOptimal2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#64748b;stop-opacity:0.9" />
+    </linearGradient>
+    <radialGradient id="centerOptimal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <polygon points="50,20 62,26 62,38 50,44 38,38 38,26" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="62,26 74,32 74,44 62,50 50,44 50,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="62,50 74,56 74,68 62,74 50,68 50,56" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="50,44 62,50 62,62 50,68 38,62 38,50" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="38,38 50,44 50,56 38,62 26,56 26,44" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
+  
+  <polygon points="38,26 50,32 50,44 38,50 26,44 26,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
+  
+  <circle cx="50" cy="44" r="8" fill="url(#centerOptimal)" stroke="#475569" stroke-width="1.5"/>
+  
+  <circle cx="44" cy="32" r="1.8" fill="#475569"/>
+  <circle cx="56" cy="38" r="1.8" fill="#475569"/>
+  <circle cx="62" cy="56" r="1.8" fill="#475569"/>
+  <circle cx="38" cy="56" r="1.8" fill="#475569"/>
+  <circle cx="32" cy="38" r="1.8" fill="#475569"/>
+  
+  <path d="M46 40 L54 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M54 40 L46 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+  
+  <path d="M50 36 L50 52" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+  <path d="M42 44 L58 44" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
+</svg>
+                PARAs AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="#home">ホーム</a></li>
+                <li><a href="#trending">トレンド</a></li>
+                <li><a href="#categories">カテゴリー</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section container">
+        <div class="search-header">
+            <h1>PARAs AI 分析ログ</h1>
+            <p>PARAs AIの分析結果を共有いたします。</p>
+        </div>
+        
+        <div class="search-form">
+            <input type="text" class="search-input" id="searchInput" placeholder="キーワードを入力してください...">
+            <button class="search-button" onclick="performSearch()">検索</button>
+        </div>
+        
+        <div class="random-keyword">
+            <button class="random-keyword-btn" onclick="searchRandomKeyword()">ランダムキーワードで検索</button>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content container">
+        <div class="results-info" id="resultsInfo">
+            <h2>検索結果</h2>
+            <div class="results-count" id="resultsCount">読み込み中...</div>
+        </div>
+
+        <div id="loadingIndicator" class="loading">
+            <div class="spinner"></div>
+            <p>検索中...</p>
+        </div>
+
+        <div class="results-grid" id="resultsGrid">
+            <!-- 検索結果がここに表示されます -->
+        </div>
+
+        <div class="no-results" id="noResults" style="display: none;">
+            <h3>検索結果が見つかりませんでした</h3>
+            <p>別のキーワードで検索してみてください</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 InfoCuration. All rights reserved.</p>
+            <p>
+                <a href="#privacy">プライバシーポリシー</a> | 
+                <a href="#terms">利用規約</a> | 
+                <a href="#contact">お問い合わせ</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        let currentData = null;
+        let currentKeyword = '';
+
+        // 初期表示（ランダムキーワードで検索）
+        document.addEventListener('DOMContentLoaded', function() {
+            searchRandomKeyword();
+        });
+
+        // ランダムキーワードで検索
+        function searchRandomKeyword() {
+            if (!currentData || !currentData.keyword_dict) {
+                console.log('データがまだ読み込まれていません');
+                return;
+            }
+            const keywords = Object.keys(currentData.keyword_dict);
+            const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+            document.getElementById('searchInput').value = randomKeyword;
+            performSearch();
+        }
+
+        // 検索実行
+        function performSearch() {
+            if (!currentData || !currentData.keyword_dict) {
+                alert('データがまだ読み込まれていません。しばらくお待ちください。');
+                return;
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            const keyword = searchInput.value.trim();
+            
+            if (!keyword) {
+                alert('キーワードを入力してください');
+                return;
+            }
+
+            currentKeyword = keyword;
+            showLoading();
+            
+            // 実際の検索処理をシミュレート
+            setTimeout(() => {
+                const results = searchKeyword(keyword);
+                displayResults(results, keyword);
+                hideLoading();
+            }, 500);
+        }
+
+        // キーワード検索
+        function searchKeyword(keyword) {
+            const results = [];
+            
+            // 完全一致検索
+            if (currentData.keyword_dict[keyword]) {
+                results.push(...currentData.keyword_dict[keyword]);
+            }
+            
+            // 部分一致検索
+            Object.keys(currentData.keyword_dict).forEach(key => {
+                if (key.toLowerCase().includes(keyword.toLowerCase()) && key !== keyword) {
+                    results.push(...currentData.keyword_dict[key]);
+                }
+            });
+
+            // 重複除去とweight順ソート
+            const uniqueResults = [];
+            const seenPaths = new Set();
+            
+            results.forEach(result => {
+                if (!seenPaths.has(result.file_path)) {
+                    seenPaths.add(result.file_path);
+                    uniqueResults.push(result);
+                }
+            });
+
+            return uniqueResults.sort((a, b) => b.weight - a.weight);
+        }
+
+        // 検索結果表示
+        function displayResults(results, keyword) {
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            const noResults = document.getElementById('noResults');
+            
+            resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
+            
+            if (results.length === 0) {
+                resultsGrid.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            
+            resultsGrid.innerHTML = results.map(result => {
+                const title = currentData.page_title_dict[result.file_path] || result.file_path;
+                const relatedKeywords = getRelatedKeywords(result.file_path);
+                
+                return `
+                    <div class="result-card">
+                        <a href="${result.file_path}" class="result-title">${title}</a>
+                        <div class="result-meta">
+                            <span class="result-weight">重要度: ${(result.weight * 100).toFixed(0)}%</span>
+                            <a href="${result.file_path}" class="result-url">${result.file_path}</a>
+                        </div>
+                        <div class="result-keywords">
+                            ${relatedKeywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // file_pathに紐づく上位5つのキーワードを取得
+        function getTopKeywordsForPath(filePath) {
+            const keywords = [];
+            Object.keys(currentData.keyword_dict).forEach(keyword => {
+                const items = currentData.keyword_dict[keyword];
+                const item = items.find(item => item.file_path === filePath);
+                if (item) {
+                    keywords.push({ keyword: keyword, weight: item.weight });
+                }
+            });
+            
+            // weightの大きい順にソートして上位5件を取得
+            return keywords
+                .sort((a, b) => b.weight - a.weight)
+                .slice(0, 5)
+                .map(item => item.keyword);
+        }
+
+        // ローディング表示
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('resultsGrid').style.display = 'none';
+            document.getElementById('noResults').style.display = 'none';
+        }
+
+        // ローディング非表示
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('resultsGrid').style.display = 'grid';
+        }
+
+        // Enterキーで検索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 実際の使用時はdata/keyword_weight.jsonを読み込む関数
+        async function loadKeywordData() {
+            try {
+                //const response = await fetch('data/keyword_weight.json');
+                const response = await fetch('data/keyword_weight.json');
+                const data = await response.json();
+                currentData = data;
+                console.log('キーワードデータを読み込みました');
+            } catch (error) {
+                console.error('キーワードデータの読み込みに失敗しました:', error);
+                // サンプルデータを使用
+            }
+        }
+
+        loadKeywordData();
+    </script>
+</body>
+</html>
