@@ -527,15 +527,27 @@
         // TinySegmenter instance を格納する変数を宣言（グローバルスコープ）
         let segmenter = null;
 
-        // 初期化処理を修正
-        document.addEventListener('DOMContentLoaded', function() {
-            // TinySegmenterを初期化
-            if (typeof TinySegmenter !== 'undefined') {
-                segmenter = new TinySegmenter();
-                console.log('TinySegmenter initialized');
-            } else {
-                console.error('TinySegmenter not loaded');
-            }
+        // TinySegmenterの初期化を待つ関数
+        function initializeTinySegmenter() {
+            return new Promise((resolve) => {
+                const checkSegmenter = () => {
+                    if (typeof TinySegmenter !== 'undefined') {
+                        segmenter = new TinySegmenter();
+                        console.log('TinySegmenter initialized successfully');
+                        resolve();
+                    } else {
+                        console.log('Waiting for TinySegmenter...');
+                        setTimeout(checkSegmenter, 100);
+                    }
+                };
+                checkSegmenter();
+            });
+        }
+
+        // DOMContentLoaded時の処理を修正
+        document.addEventListener('DOMContentLoaded', async function() {
+            // TinySegmenterの初期化を待つ
+            await initializeTinySegmenter();
         });
 
         // 重み付きランダムサンプリングでキーワードを選択
