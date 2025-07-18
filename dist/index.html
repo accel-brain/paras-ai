@@ -533,7 +533,7 @@
             
             resultsGrid.innerHTML = results.map(result => {
                 const title = currentData.page_title_dict[result.file_path] || result.file_path;
-                const relatedKeywords = getRelatedKeywords(result.file_path);
+                const relatedKeywords = getTopKeywordsForPath(result.file_path);
                 
                 return `
                     <div class="result-card">
