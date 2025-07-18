@@ -696,13 +696,16 @@
             return 'size-s';
         }
 
-        // タグクラウドからの検索
+        // タグクラウドからの検索（URLハッシュ更新付き）
         function searchByTagCloud(keyword) {
+            // URLハッシュを更新
+            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            
             document.getElementById('searchInput').value = keyword;
             executeKeywordSearch(keyword);
         }
 
-        // 検索実行
+// 検索実行（URLハッシュ更新付き）
         function performSearch() {
             if (!currentData || !currentData.keyword_dict) {
                 alert('データがまだ読み込まれていません。しばらくお待ちください。');
@@ -717,6 +720,9 @@
                 return;
             }
 
+            // URLハッシュを更新
+            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+
             currentKeyword = keyword;
             showLoading();
             
@@ -726,7 +732,6 @@
                 hideLoading();
             }, 500);
         }
-
         // キーワード検索
         function searchKeyword(keyword) {
             const results = [];
@@ -895,10 +900,13 @@
             }
         });
 
-        // キーワードタグクリック時の処理
+        // キーワードタグクリック時の処理（URLハッシュ更新付き）
         function searchByKeywordTag(event, keyword) {
             event.preventDefault();
             event.stopPropagation();
+            
+            // URLハッシュを更新
+            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
             
             setSearchKeyword(keyword);
             executeKeywordSearch(keyword);
@@ -912,11 +920,18 @@
             searchInput.select();
         }
 
-        // キーワード検索を実行する関数
+        // キーワード検索を実行する関数（URLハッシュ更新付き）
         function executeKeywordSearch(keyword) {
             if (!currentData || !currentData.keyword_dict) {
                 alert('データがまだ読み込まれていません。しばらくお待ちください。');
                 return;
+            }
+
+            // URLハッシュが現在のキーワードと異なる場合のみ更新
+            const currentHash = window.location.hash;
+            const expectedHash = `#keyword=${encodeURIComponent(keyword)}`;
+            if (currentHash !== expectedHash) {
+                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
             }
 
             currentKeyword = keyword;
