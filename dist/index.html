@@ -142,8 +142,71 @@
 
         .random-keyword {
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .tag-cloud-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tag-cloud-title {
+            font-size: 1rem;
             color: #666;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .tag-cloud-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            border: none;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.2);
+        }
+
+        .tag-cloud-item:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        .tag-cloud-item.size-xl {
+            font-size: 1.1rem;
+            padding: 0.6rem 1.2rem;
+        }
+
+        .tag-cloud-item.size-l {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .tag-cloud-item.size-m {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .tag-cloud-item.size-s {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
         }
 
         .random-keyword-btn {
@@ -251,6 +314,17 @@
             border-radius: 5px;
             font-size: 0.8rem;
             border: 1px solid #cbd5e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .keyword-tag:hover {
+            background: #2b6cb0;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3);
         }
 
         .no-results {
@@ -334,49 +408,12 @@
     <header class="header">
         <nav class="nav container">
             <a href="#" class="logo">
-<svg class="logo-icon" viewBox="22 18 56 56" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="webOptimal1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:0.9" />
-    </linearGradient>
-    <linearGradient id="webOptimal2" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:0.9" />
-    </linearGradient>
-    <radialGradient id="centerOptimal" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
-    </radialGradient>
-  </defs>
-  
-  <polygon points="50,20 62,26 62,38 50,44 38,38 38,26" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="62,26 74,32 74,44 62,50 50,44 50,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="62,50 74,56 74,68 62,74 50,68 50,56" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="50,44 62,50 62,62 50,68 38,62 38,50" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="38,38 50,44 50,56 38,62 26,56 26,44" fill="url(#webOptimal1)" stroke="#475569" stroke-width="1"/>
-  
-  <polygon points="38,26 50,32 50,44 38,50 26,44 26,32" fill="url(#webOptimal2)" stroke="#475569" stroke-width="1"/>
-  
-  <circle cx="50" cy="44" r="8" fill="url(#centerOptimal)" stroke="#475569" stroke-width="1.5"/>
-  
-  <circle cx="44" cy="32" r="1.8" fill="#475569"/>
-  <circle cx="56" cy="38" r="1.8" fill="#475569"/>
-  <circle cx="62" cy="56" r="1.8" fill="#475569"/>
-  <circle cx="38" cy="56" r="1.8" fill="#475569"/>
-  <circle cx="32" cy="38" r="1.8" fill="#475569"/>
-  
-  <path d="M46 40 L54 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M54 40 L46 48" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-  
-  <path d="M50 36 L50 52" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
-  <path d="M42 44 L58 44" stroke="#64748b" stroke-width="0.8" opacity="0.6"/>
-</svg>
-                PARAs AI
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6c5ce7"/>
+                    <path d="M2 17L12 22L22 17" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                InfoCuration
             </a>
             <ul class="nav-links">
                 <li><a href="#home">ホーム</a></li>
@@ -391,7 +428,7 @@
     <section class="search-section container">
         <div class="search-header">
             <h1>PARAs AI 分析ログ</h1>
-            <p>PARAs AIの分析結果を共有いたします。</p>
+            <p>過去の分析結果</p>
         </div>
         
         <div class="search-form">
@@ -401,6 +438,13 @@
         
         <div class="random-keyword">
             <button class="random-keyword-btn" onclick="searchRandomKeyword()">ランダムキーワードで検索</button>
+        </div>
+
+        <div class="tag-cloud-section">
+            <div class="tag-cloud-title">人気キーワード</div>
+            <div class="tag-cloud" id="tagCloud">
+                <!-- タグクラウドがここに表示されます -->
+            </div>
         </div>
     </section>
 
@@ -438,10 +482,8 @@
         </div>
     </footer>
 
+    <!-- TinySegmenter CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tiny-segmenter@0.2.0/tiny-segmenter.js"></script>
-    <script>
-        const segmenter = new TinySegmenter();
-
         let currentData = null;
         let currentKeyword = '';
 
@@ -450,16 +492,90 @@
             searchRandomKeyword();
         });
 
-        // ランダムキーワードで検索
+        // ランダムキーワードで検索（重み付きサンプリング）
         function searchRandomKeyword() {
             if (!currentData || !currentData.keyword_dict) {
                 console.log('データがまだ読み込まれていません');
                 return;
             }
-            const keywords = Object.keys(currentData.keyword_dict);
-            const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+            
+            const randomKeyword = getWeightedRandomKeyword();
             document.getElementById('searchInput').value = randomKeyword;
             performSearch();
+        }
+
+        // 重み付きランダムサンプリングでキーワードを選択
+        function getWeightedRandomKeyword() {
+            const keywordWeights = calculateKeywordWeights();
+            const totalWeight = keywordWeights.reduce((sum, item) => sum + item.totalWeight, 0);
+            
+            let random = Math.random() * totalWeight;
+            
+            for (const item of keywordWeights) {
+                random -= item.totalWeight;
+                if (random <= 0) {
+                    return item.keyword;
+                }
+            }
+            
+            // フォールバック
+            return keywordWeights[0]?.keyword || Object.keys(currentData.keyword_dict)[0];
+        }
+
+        // キーワードの総重みを計算
+        function calculateKeywordWeights() {
+            const keywordWeights = [];
+            
+            Object.keys(currentData.keyword_dict).forEach(keyword => {
+                const items = currentData.keyword_dict[keyword];
+                const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+                keywordWeights.push({ keyword, totalWeight });
+            });
+            
+            return keywordWeights.sort((a, b) => b.totalWeight - a.totalWeight);
+        }
+
+        // タグクラウドを生成
+        function generateTagCloud() {
+            if (!currentData || !currentData.keyword_dict) {
+                return;
+            }
+            
+            const tagCloudContainer = document.getElementById('tagCloud');
+            const keywordWeights = calculateKeywordWeights();
+            
+            // 上位30個を取得
+            const topKeywords = keywordWeights.slice(0, 30);
+            
+            if (topKeywords.length === 0) {
+                tagCloudContainer.innerHTML = '<p style="color: #666;">キーワードがありません</p>';
+                return;
+            }
+            
+            // 重みに基づいてサイズクラスを決定
+            const maxWeight = topKeywords[0].totalWeight;
+            const minWeight = topKeywords[topKeywords.length - 1].totalWeight;
+            
+            tagCloudContainer.innerHTML = topKeywords.map(item => {
+                const sizeClass = getTagSizeClass(item.totalWeight, maxWeight, minWeight);
+                return `<button class="tag-cloud-item ${sizeClass}" onclick="searchByTagCloud('${item.keyword}')">${item.keyword}</button>`;
+            }).join('');
+        }
+
+        // タグのサイズクラスを決定
+        function getTagSizeClass(weight, maxWeight, minWeight) {
+            const ratio = (weight - minWeight) / (maxWeight - minWeight);
+            
+            if (ratio > 0.8) return 'size-xl';
+            if (ratio > 0.6) return 'size-l';
+            if (ratio > 0.4) return 'size-m';
+            return 'size-s';
+        }
+
+        // タグクラウドからの検索
+        function searchByTagCloud(keyword) {
+            document.getElementById('searchInput').value = keyword;
+            executeKeywordSearch(keyword);
         }
 
         // 検索実行
@@ -490,6 +606,12 @@
 
         // 形態素解析を使用したキーワード検索
         function searchKeyword(keyword) {
+            // セグメンターが初期化されているかチェック
+            if (!segmenter) {
+                console.error('TinySegmenter not initialized');
+                return [];
+            }
+            
             const results = [];
             const searchMorphemes = segmenter.segment(keyword);
             
@@ -523,36 +645,38 @@
             });
 
             // 2. ページタイトルでの検索
-            Object.keys(currentData.page_title_dict).forEach(filePath => {
-                const title = currentData.page_title_dict[filePath];
-                const titleMorphemes = segmenter.segment(title);
-                
-                // タイトルの形態素と検索形態素がマッチするかチェック
-                const hasTitleMatch = filteredMorphemes.some(searchMorpheme =>
-                    titleMorphemes.some(titleMorpheme =>
-                        searchMorpheme === titleMorpheme ||
-                        titleMorpheme.includes(searchMorpheme) ||
-                        searchMorpheme.includes(titleMorpheme)
-                    )
-                );
-                
-                if (hasTitleMatch) {
-                    // このfile_pathに関連するweightを取得（複数のキーワードに属している場合は最大値を使用）
-                    let maxWeight = 0;
-                    Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
-                        const items = currentData.keyword_dict[dictKeyword];
-                        const item = items.find(item => item.file_path === filePath);
-                        if (item && item.weight > maxWeight) {
-                            maxWeight = item.weight;
-                        }
-                    });
+            if (currentData.page_title_dict) {
+                Object.keys(currentData.page_title_dict).forEach(filePath => {
+                    const title = currentData.page_title_dict[filePath];
+                    const titleMorphemes = segmenter.segment(title);
                     
-                    if (maxWeight > 0) {
-                        results.push({ file_path: filePath, weight: maxWeight });
-                        console.log(`タイトルマッチ: ${title}`);
+                    // タイトルの形態素と検索形態素がマッチするかチェック
+                    const hasTitleMatch = filteredMorphemes.some(searchMorpheme =>
+                        titleMorphemes.some(titleMorpheme =>
+                            searchMorpheme === titleMorpheme ||
+                            titleMorpheme.includes(searchMorpheme) ||
+                            searchMorpheme.includes(titleMorpheme)
+                        )
+                    );
+                    
+                    if (hasTitleMatch) {
+                        // このfile_pathに関連するweightを取得（複数のキーワードに属している場合は最大値を使用）
+                        let maxWeight = 0;
+                        Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
+                            const items = currentData.keyword_dict[dictKeyword];
+                            const item = items.find(item => item.file_path === filePath);
+                            if (item && item.weight > maxWeight) {
+                                maxWeight = item.weight;
+                            }
+                        });
+                        
+                        if (maxWeight > 0) {
+                            results.push({ file_path: filePath, weight: maxWeight });
+                            console.log(`タイトルマッチ: ${title}`);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // 重複除去とweight順ソート
             const uniqueResults = [];
@@ -583,7 +707,7 @@
             }
 
             noResults.style.display = 'none';
-
+            
             resultsGrid.innerHTML = results.map(result => {
                 const title = currentData.page_title_dict[result.file_path] || result.file_path;
                 const topKeywords = getTopKeywordsForPath(result.file_path);
@@ -601,6 +725,10 @@
 
         // file_pathに紐づく上位5つのキーワードを取得
         function getTopKeywordsForPath(filePath) {
+            if (!currentData || !currentData.keyword_dict) {
+                return [];
+            }
+            
             const keywords = [];
             Object.keys(currentData.keyword_dict).forEach(keyword => {
                 const items = currentData.keyword_dict[keyword];
@@ -695,7 +823,6 @@
         // 実際の使用時はdata/keyword_weight.jsonを読み込む関数
         async function loadKeywordData() {
             try {
-                //const response = await fetch('data/keyword_weight.json');
                 const response = await fetch('data/keyword_weight.json');
                 const data = await response.json();
                 currentData = data;
@@ -706,6 +833,7 @@
             }
         }
 
+        // 実際の使用時はこのコメントを外してください
         loadKeywordData();
     </script>
 </body>
