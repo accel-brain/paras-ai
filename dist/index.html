@@ -473,10 +473,6 @@
             <button class="search-button" onclick="performSearch()">検索</button>
         </div>
         
-        <div class="random-keyword">
-            <button class="random-keyword-btn" onclick="searchRandomKeyword()">ランダムキーワードで検索</button>
-        </div>
-
         <div class="tag-cloud-section">
             <div class="tag-cloud-title">人気キーワード</div>
             <div class="tag-cloud" id="tagCloud">
@@ -524,23 +520,22 @@
     <script>
         let currentData = null;
         let currentKeyword = '';
+        // TinySegmenter instance を格納する変数を宣言（グローバルスコープ）
+        let segmenter = null;
 
-        // 初期表示（ランダムキーワードで検索）
+        // 初期化処理を修正
         document.addEventListener('DOMContentLoaded', function() {
-            searchRandomKeyword();
-        });
-
-        // ランダムキーワードで検索（重み付きサンプリング）
-        function searchRandomKeyword() {
-            if (!currentData || !currentData.keyword_dict) {
-                console.log('データがまだ読み込まれていません');
-                return;
+            // TinySegmenterを初期化
+            if (typeof TinySegmenter !== 'undefined') {
+                segmenter = new TinySegmenter();
+                console.log('TinySegmenter initialized');
+            } else {
+                console.error('TinySegmenter not loaded');
             }
             
-            const randomKeyword = getWeightedRandomKeyword();
-            document.getElementById('searchInput').value = randomKeyword;
-            performSearch();
-        }
+            // 既存の初期化処理
+            searchRandomKeyword();
+        });
 
         // 重み付きランダムサンプリングでキーワードを選択
         function getWeightedRandomKeyword() {
