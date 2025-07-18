@@ -438,7 +438,10 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/tiny-segmenter@0.2.0/tiny-segmenter.js"></script>
     <script>
+        const segmenter = new TinySegmenter();
+
         let currentData = null;
         let currentKeyword = '';
 
@@ -485,19 +488,69 @@
             }, 500);
         }
 
-        // キーワード検索
+        // 形態素解析を使用したキーワード検索
         function searchKeyword(keyword) {
             const results = [];
+            const searchMorphemes = segmenter.segment(keyword);
             
-            // 完全一致検索
-            if (currentData.keyword_dict[keyword]) {
-                results.push(...currentData.keyword_dict[keyword]);
-            }
+            // 短い形態素（1文字や助詞など）を除外
+            const filteredMorphemes = searchMorphemes.filter(morpheme => 
+                morpheme.length > 1 && 
+                !['の', 'に', 'を', 'は', 'が', 'で', 'と', 'から', 'まで', 'より', 'について', 'による', 'として'].includes(morpheme)
+            );
             
-            // 部分一致検索
-            Object.keys(currentData.keyword_dict).forEach(key => {
-                if (key.toLowerCase().includes(keyword.toLowerCase()) && key !== keyword) {
-                    results.push(...currentData.keyword_dict[key]);
+            console.log('検索キーワード:', keyword);
+            console.log('形態素解析結果:', searchMorphemes);
+            console.log('フィルター後:', filteredMorphemes);
+            
+            // 1. キーワード辞書での検索
+            Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
+                const dictMorphemes = segmenter.segment(dictKeyword);
+                
+                // いずれかの形態素がマッチするかチェック
+                const hasMatch = filteredMorphemes.some(searchMorpheme =>
+                    dictMorphemes.some(dictMorpheme =>
+                        searchMorpheme === dictMorpheme ||
+                        dictMorpheme.includes(searchMorpheme) ||
+                        searchMorpheme.includes(dictMorpheme)
+                    )
+                );
+                
+                if (hasMatch) {
+                    results.push(...currentData.keyword_dict[dictKeyword]);
+                    console.log(`マッチしたキーワード: ${dictKeyword}`);
+                }
+            });
+
+            // 2. ページタイトルでの検索
+            Object.keys(currentData.page_title_dict).forEach(filePath => {
+                const title = currentData.page_title_dict[filePath];
+                const titleMorphemes = segmenter.segment(title);
+                
+                // タイトルの形態素と検索形態素がマッチするかチェック
+                const hasTitleMatch = filteredMorphemes.some(searchMorpheme =>
+                    titleMorphemes.some(titleMorpheme =>
+                        searchMorpheme === titleMorpheme ||
+                        titleMorpheme.includes(searchMorpheme) ||
+                        searchMorpheme.includes(titleMorpheme)
+                    )
+                );
+                
+                if (hasTitleMatch) {
+                    // このfile_pathに関連するweightを取得（複数のキーワードに属している場合は最大値を使用）
+                    let maxWeight = 0;
+                    Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
+                        const items = currentData.keyword_dict[dictKeyword];
+                        const item = items.find(item => item.file_path === filePath);
+                        if (item && item.weight > maxWeight) {
+                            maxWeight = item.weight;
+                        }
+                    });
+                    
+                    if (maxWeight > 0) {
+                        results.push({ file_path: filePath, weight: maxWeight });
+                        console.log(`タイトルマッチ: ${title}`);
+                    }
                 }
             });
 
@@ -530,22 +583,18 @@
             }
 
             noResults.style.display = 'none';
-            
+
             resultsGrid.innerHTML = results.map(result => {
                 const title = currentData.page_title_dict[result.file_path] || result.file_path;
-                const relatedKeywords = getTopKeywordsForPath(result.file_path);
+                const topKeywords = getTopKeywordsForPath(result.file_path);
                 
                 return `
-                    <div class="result-card">
-                        <a href="${result.file_path}" class="result-title">${title}</a>
-                        <div class="result-meta">
-                            <span class="result-weight">重要度: ${(result.weight * 100).toFixed(0)}%</span>
-                            <a href="${result.file_path}" class="result-url">${result.file_path}</a>
-                        </div>
+                    <a href="${result.file_path}" class="result-card">
+                        <div class="result-title">${title}</div>
                         <div class="result-keywords">
-                            ${relatedKeywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')}
+                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
                         </div>
-                    </div>
+                    </a>
                 `;
             }).join('');
         }
@@ -587,6 +636,61 @@
                 performSearch();
             }
         });
+
+        // キーワードタグクリック時の処理
+        function searchByKeywordTag(event, keyword) {
+            // イベントの伝播を停止（親のリンククリックを防ぐ）
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // 検索フォームにキーワードを設定
+            setSearchKeyword(keyword);
+            
+            // 検索を実行
+            executeKeywordSearch(keyword);
+        }
+
+        // 検索フォームにキーワードを設定する関数
+        function setSearchKeyword(keyword) {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = keyword;
+            
+            // 視覚的フィードバック（フォーカス + 一時的なハイライト）
+            searchInput.focus();
+            searchInput.select();
+        }
+
+        // キーワード検索を実行する関数
+        function executeKeywordSearch(keyword) {
+            if (!currentData || !currentData.keyword_dict) {
+                alert('データがまだ読み込まれていません。しばらくお待ちください。');
+                return;
+            }
+
+            currentKeyword = keyword;
+            showLoading();
+            
+            // 検索処理を実行
+            setTimeout(() => {
+                const results = searchKeyword(keyword);
+                displayResults(results, keyword);
+                hideLoading();
+                
+                // 検索結果セクションまでスムーズスクロール
+                scrollToResults();
+            }, 300);
+        }
+
+        // 検索結果セクションへのスムーズスクロール関数
+        function scrollToResults() {
+            const resultsSection = document.getElementById('resultsInfo');
+            if (resultsSection) {
+                resultsSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
 
         // 実際の使用時はdata/keyword_weight.jsonを読み込む関数
         async function loadKeywordData() {
