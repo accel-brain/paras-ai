@@ -643,20 +643,24 @@
             return keywordWeights[0]?.keyword || Object.keys(currentData.keyword_dict)[0];
         }
 
-        // キーワードの総重みを計算
+        // キーワードの総重みを計算（weightが0より多い要素のみ）
         function calculateKeywordWeights() {
             const keywordWeights = [];
             
             Object.keys(currentData.keyword_dict).forEach(keyword => {
                 const items = currentData.keyword_dict[keyword];
                 const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-                keywordWeights.push({ keyword, totalWeight });
+                
+                // weightが0より多い要素のみを対象とする
+                if (totalWeight > 0) {
+                    keywordWeights.push({ keyword, totalWeight });
+                }
             });
             
             return keywordWeights.sort((a, b) => b.totalWeight - a.totalWeight);
         }
 
-        // タグクラウドを生成
+        // タグクラウドを生成（最大10個まで）
         function generateTagCloud() {
             if (!currentData || !currentData.keyword_dict) {
                 return;
@@ -665,7 +669,8 @@
             const tagCloudContainer = document.getElementById('tagCloud');
             const keywordWeights = calculateKeywordWeights();
             
-            const topKeywords = keywordWeights.slice(0, 30);
+            // 上位10個に制限
+            const topKeywords = keywordWeights.slice(0, 10);
             
             if (topKeywords.length === 0) {
                 tagCloudContainer.innerHTML = '<p style="color: #666;">キーワードがありません</p>';
