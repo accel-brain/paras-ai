@@ -852,7 +852,7 @@
             noResults.style.display = 'none';
             
             resultsGrid.innerHTML = results.map(result => {
-                const title = currentData.page_title_dict[result.file_path] || result.file_path;
+                const title = currentData.page_title_dict[result.file_path] || "無題";
                 const topKeywords = getTopKeywordsForPath(result.file_path);
                 
                 return `
@@ -1163,7 +1163,7 @@ function displayRecentPosts() {
     noResults.style.display = 'none';
     
     resultsGrid.innerHTML = recentPages.map(page => {
-        const title = currentData.page_title_dict[page.file_path] || page.file_path;
+        const title = currentData.page_title_dict[page.file_path] || "無題";
         const topKeywords = getTopKeywordsForPath(page.file_path);
         const publishDate = page.publish_datetime ? 
             new Date(page.publish_datetime).toLocaleDateString('ja-JP', {
