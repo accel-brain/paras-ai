@@ -498,6 +498,7 @@
         // グローバル変数
         let currentData = null;
         let currentKeyword = '';
+        let isUpdatingFromHash = false;
 
         // 簡易日本語形態素解析器
         class SimpleJapaneseTokenizer {
@@ -698,14 +699,16 @@
 
         // タグクラウドからの検索（URLハッシュ更新付き）
         function searchByTagCloud(keyword) {
-            // URLハッシュを更新
-            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+            if (!isUpdatingFromHash) {
+                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            }
             
             document.getElementById('searchInput').value = keyword;
             executeKeywordSearch(keyword);
         }
 
-// 検索実行（URLハッシュ更新付き）
+        // 検索実行（URLハッシュ更新付き）
         function performSearch() {
             if (!currentData || !currentData.keyword_dict) {
                 alert('データがまだ読み込まれていません。しばらくお待ちください。');
@@ -720,8 +723,10 @@
                 return;
             }
 
-            // URLハッシュを更新
-            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+            if (!isUpdatingFromHash) {
+                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            }
 
             currentKeyword = keyword;
             showLoading();
@@ -905,8 +910,10 @@
             event.preventDefault();
             event.stopPropagation();
             
-            // URLハッシュを更新
-            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+            if (!isUpdatingFromHash) {
+                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            }
             
             setSearchKeyword(keyword);
             executeKeywordSearch(keyword);
@@ -927,11 +934,14 @@
                 return;
             }
 
-            // URLハッシュが現在のキーワードと異なる場合のみ更新
-            const currentHash = window.location.hash;
-            const expectedHash = `#keyword=${encodeURIComponent(keyword)}`;
-            if (currentHash !== expectedHash) {
-                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+            // ハッシュ更新からの処理中は重複更新を避ける
+            if (!isUpdatingFromHash) {
+                // URLハッシュが現在のキーワードと異なる場合のみ更新
+                const currentHash = window.location.hash;
+                const expectedHash = `#keyword=${encodeURIComponent(keyword)}`;
+                if (currentHash !== expectedHash) {
+                    window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+                }
             }
 
             currentKeyword = keyword;
@@ -1012,6 +1022,8 @@
 
         // URLハッシュ値からキーワードを抽出して検索する機能
         function handleHashKeyword() {
+            if (isUpdatingFromHash) return; // 無限ループ防止
+            
             const hash = window.location.hash;
             
             // #keyword=で始まるハッシュをチェック
@@ -1032,6 +1044,9 @@
                     const trimmedKeyword = keyword.trim();
                     console.log('URLハッシュからキーワードを検出:', trimmedKeyword);
                     
+                    // フラグを設定してハッシュ更新による処理であることを示す
+                    isUpdatingFromHash = true;
+                    
                     // 入力フォームにキーワードを設定
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) {
@@ -1044,25 +1059,43 @@
                     
                     // データが読み込まれている場合は即座に検索実行
                     if (currentData && currentData.keyword_dict) {
-                        executeKeywordSearch(trimmedKeyword);
+                        executeKeywordSearchFromHash(trimmedKeyword);
                     } else {
                         // データ読み込み完了まで待機してから検索実行
                         const checkDataInterval = setInterval(() => {
                             if (currentData && currentData.keyword_dict) {
                                 clearInterval(checkDataInterval);
-                                executeKeywordSearch(trimmedKeyword);
+                                executeKeywordSearchFromHash(trimmedKeyword);
                             }
                         }, 100);
                         
                         // 10秒でタイムアウト
                         setTimeout(() => {
                             clearInterval(checkDataInterval);
+                            isUpdatingFromHash = false;
                         }, 10000);
                     }
                 }
             }
         }
-        
+        // ハッシュからの検索実行（ハッシュ更新なし）
+        function executeKeywordSearchFromHash(keyword) {
+            if (!currentData || !currentData.keyword_dict) {
+                isUpdatingFromHash = false;
+                return;
+            }
+
+            currentKeyword = keyword;
+            showLoading();
+            
+            setTimeout(() => {
+                const results = searchKeyword(keyword);
+                displayResults(results, keyword);
+                hideLoading();
+                scrollToResults();
+                isUpdatingFromHash = false; // 処理完了後にフラグをリセット
+            }, 300);
+        }
         // ページ読み込み時とハッシュ変更時にハッシュキーワードをチェック
         window.addEventListener('load', handleHashKeyword);
         window.addEventListener('hashchange', handleHashKeyword);
