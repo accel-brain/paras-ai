@@ -717,9 +717,10 @@
 
             const searchInput = document.getElementById('searchInput');
             const keyword = searchInput.value.trim();
-            
+
+            // 既存のperformSearch関数の最初に追加
             if (!keyword) {
-                alert('キーワードを入力してください');
+                displayRecentPosts();
                 return;
             }
 
