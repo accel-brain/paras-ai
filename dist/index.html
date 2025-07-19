@@ -344,6 +344,54 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .pagination-button {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pagination-button:disabled {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .search-form {
@@ -365,6 +413,22 @@
 
             .nav-links {
                 display: none;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .pagination-button {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .pagination-info {
+                width: 100%;
+                text-align: center;
+                font-size: 0.8rem;
             }
         }
 
@@ -476,6 +540,19 @@
             <!-- 検索結果がここに表示されます -->
         </div>
 
+        <!-- Pagination Controls -->
+        <div class="pagination" id="paginationControls" style="display: none;">
+            <button class="pagination-button" id="prevPageBtn" onclick="goToPreviousPage()">
+                ← 前のページへ
+            </button>
+            <div class="pagination-info" id="paginationInfo">
+                <!-- ページ情報がここに表示されます -->
+            </div>
+            <button class="pagination-button" id="nextPageBtn" onclick="goToNextPage()">
+                次のページへ →
+            </button>
+        </div>
+
         <div class="no-results" id="noResults" style="display: none;">
             <h3>検索結果が見つかりませんでした</h3>
             <p>別のキーワードで検索してみてください</p>
@@ -499,6 +576,12 @@
         let currentData = null;
         let currentKeyword = '';
         let isUpdatingFromHash = false;
+        
+        // ページネーション関連の変数
+        let currentPage = 1;
+        let itemsPerPage = 9;
+        let currentResults = [];
+        let isSearchMode = false;
 
         // 簡易日本語形態素解析器
         class SimpleJapaneseTokenizer {
@@ -671,7 +754,7 @@
             const keywordWeights = calculateKeywordWeights();
             
             // 上位10個に制限
-            const topKeywords = keywordWeights.slice(0, 10);
+            const topKeywords = keywordWeights.slice(0, 9);
             
             if (topKeywords.length === 0) {
                 tagCloudContainer.innerHTML = '<p style="color: #666;">キーワードがありません</p>';
@@ -734,10 +817,14 @@
             
             setTimeout(() => {
                 const results = searchKeyword(keyword);
-                displayResults(results, keyword);
+                currentResults = results;
+                isSearchMode = true;
+                currentPage = 1;
+                displayResultsWithPagination(results, keyword);
                 hideLoading();
             }, 500);
         }
+
         // キーワード検索
         function searchKeyword(keyword) {
             const results = [];
@@ -835,44 +922,230 @@
             return uniqueResults.sort((a, b) => b.weight - a.weight);
         }
 
-        // 検索結果表示
-function displayResults(results, keyword) {
-    const resultsGrid = document.getElementById('resultsGrid');
-    const resultsCount = document.getElementById('resultsCount');
-    const noResults = document.getElementById('noResults');
-    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
-    
-    // h2のテキストを検索結果に戻す
-    if (resultsInfoH2) {
-        resultsInfoH2.textContent = '検索結果';
-    }
-    
-    resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
-    
-    if (results.length === 0) {
-        resultsGrid.innerHTML = '';
-        noResults.style.display = 'block';
-        return;
-    }
+        // ページネーション付きで検索結果を表示
+        function displayResultsWithPagination(results, keyword) {
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            const noResults = document.getElementById('noResults');
+            const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+            
+            // h2のテキストを検索結果に戻す
+            if (resultsInfoH2) {
+                resultsInfoH2.textContent = '検索結果';
+            }
+            
+            resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
+            
+            if (results.length === 0) {
+                resultsGrid.innerHTML = '';
+                noResults.style.display = 'block';
+                hidePagination();
+                return;
+            }
 
-    noResults.style.display = 'none';
-    
-    resultsGrid.innerHTML = results.map(result => {
-        const title = currentData.page_title_dict[result.file_path] || "無題";
-        const topKeywords = getTopKeywordsForPath(result.file_path);
-        const authorInfo = getAuthorInfo(result.file_path);
-        
-        return `
-            <a href="${result.file_path}" class="result-card">
-                <div class="result-title">${title}</div>
-                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
-                <div class="result-keywords">
-                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                </div>
-            </a>
-        `;
-    }).join('');
-}
+            noResults.style.display = 'none';
+            
+            // ページネーション用のデータ計算
+            const totalPages = Math.ceil(results.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentPageResults = results.slice(startIndex, endIndex);
+            
+            resultsGrid.innerHTML = currentPageResults.map(result => {
+                const title = currentData.page_title_dict[result.file_path] || "無題";
+                const topKeywords = getTopKeywordsForPath(result.file_path);
+                const authorInfo = getAuthorInfo(result.file_path);
+                
+                return `
+                    <a href="${result.file_path}" class="result-card">
+                        <div class="result-title">${title}</div>
+                        ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                        <div class="result-keywords">
+                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                        </div>
+                    </a>
+                `;
+            }).join('');
+            
+            // ページネーションコントロールを表示
+            if (totalPages > 1) {
+                showPagination(currentPage, totalPages, results.length);
+            } else {
+                hidePagination();
+            }
+        }
+
+        // 最新投稿順でページを取得する関数
+        function getRecentPages() {
+            if (!currentData || !currentData.sort_dict) {
+                return [];
+            }
+            
+            // sort_dictからタイムスタンプ順でソート
+            const sortedPages = Object.keys(currentData.sort_dict)
+                .map(filePath => ({
+                    file_path: filePath,
+                    publish_timestamp: currentData.sort_dict[filePath].publish_timestamp,
+                    publish_datetime: currentData.sort_dict[filePath].publish_datetime
+                }))
+                .sort((a, b) => b.publish_timestamp - a.publish_timestamp); // 降順（最新順）
+            
+            return sortedPages;
+        }
+
+        // ニックネームと投稿日時情報を取得する共通関数
+        function getAuthorInfo(filePath) {
+            let authorInfo = '';
+            
+            if (currentData.nickname_dict && currentData.nickname_dict[filePath]) {
+                const nickname = currentData.nickname_dict[filePath].nickname || '匿名';
+                
+                // sort_dictから投稿日時を取得
+                let publishDate = '';
+                if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
+                    publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+                
+                if (publishDate) {
+                    authorInfo = `by ${nickname} ${publishDate}`;
+                } else {
+                    authorInfo = `by ${nickname}`;
+                }
+            } else if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
+                // ニックネーム情報がない場合は投稿日時のみ
+                const publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                authorInfo = publishDate;
+            }
+            
+            return authorInfo;
+        }
+
+        // ページネーション付きで最新投稿順の結果を表示する関数
+        function displayRecentPosts() {
+            if (!currentData) {
+                return;
+            }
+            
+            const recentPages = getRecentPages();
+            currentResults = recentPages;
+            isSearchMode = false;
+            currentPage = 1;
+            
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            const noResults = document.getElementById('noResults');
+            const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+            
+            // h2のテキストを変更
+            if (resultsInfoH2) {
+                resultsInfoH2.textContent = '最近の分析事例';
+            }
+            
+            resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
+            
+            if (recentPages.length === 0) {
+                resultsGrid.innerHTML = '';
+                noResults.style.display = 'block';
+                hidePagination();
+                return;
+            }
+
+            noResults.style.display = 'none';
+            
+            // ページネーション用のデータ計算
+            const totalPages = Math.ceil(recentPages.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentPageResults = recentPages.slice(startIndex, endIndex);
+            
+            resultsGrid.innerHTML = currentPageResults.map(page => {
+                const title = currentData.page_title_dict[page.file_path] || "無題";
+                const topKeywords = getTopKeywordsForPath(page.file_path);
+                const authorInfo = getAuthorInfo(page.file_path);
+                
+                return `
+                    <a href="${page.file_path}" class="result-card">
+                        <div class="result-title">${title}</div>
+                        ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                        <div class="result-keywords">
+                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                        </div>
+                    </a>
+                `;
+            }).join('');
+            
+            // ページネーションコントロールを表示
+            if (totalPages > 1) {
+                showPagination(currentPage, totalPages, recentPages.length);
+            } else {
+                hidePagination();
+            }
+        }
+
+        // ページネーションコントロールを表示
+        function showPagination(currentPageNum, totalPages, totalItems) {
+            const paginationControls = document.getElementById('paginationControls');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const paginationInfo = document.getElementById('paginationInfo');
+            
+            paginationControls.style.display = 'flex';
+            
+            // ボタンの有効/無効を設定
+            prevBtn.disabled = currentPageNum === 1;
+            nextBtn.disabled = currentPageNum === totalPages;
+            
+            // ページ情報を更新
+            const startItem = (currentPageNum - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPageNum * itemsPerPage, totalItems);
+            paginationInfo.textContent = `${startItem}-${endItem}件 / 全${totalItems}件 (${currentPageNum}/${totalPages}ページ)`;
+        }
+
+        // ページネーションコントロールを非表示
+        function hidePagination() {
+            const paginationControls = document.getElementById('paginationControls');
+            paginationControls.style.display = 'none';
+        }
+
+        // 次のページへ
+        function goToNextPage() {
+            const totalPages = Math.ceil(currentResults.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                if (isSearchMode) {
+                    displayResultsWithPagination(currentResults, currentKeyword);
+                } else {
+                    displayRecentPosts();
+                }
+                scrollToResults();
+            }
+        }
+
+        // 前のページへ
+        function goToPreviousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                if (isSearchMode) {
+                    displayResultsWithPagination(currentResults, currentKeyword);
+                } else {
+                    displayRecentPosts();
+                }
+                scrollToResults();
+            }
+        }
+
         // file_pathに紐づく上位5つのキーワードを取得
         function getTopKeywordsForPath(filePath) {
             if (!currentData || !currentData.keyword_dict) {
@@ -899,6 +1172,7 @@ function displayResults(results, keyword) {
             document.getElementById('loadingIndicator').style.display = 'block';
             document.getElementById('resultsGrid').style.display = 'none';
             document.getElementById('noResults').style.display = 'none';
+            hidePagination();
         }
 
         // ローディング非表示
@@ -958,7 +1232,10 @@ function displayResults(results, keyword) {
             
             setTimeout(() => {
                 const results = searchKeyword(keyword);
-                displayResults(results, keyword);
+                currentResults = results;
+                isSearchMode = true;
+                currentPage = 1;
+                displayResultsWithPagination(results, keyword);
                 hideLoading();
                 scrollToResults();
             }, 300);
@@ -1087,6 +1364,7 @@ function displayResults(results, keyword) {
                 }
             }
         }
+
         // ハッシュからの検索実行（ハッシュ更新なし）
         function executeKeywordSearchFromHash(keyword) {
             if (!currentData || !currentData.keyword_dict) {
@@ -1099,12 +1377,16 @@ function displayResults(results, keyword) {
             
             setTimeout(() => {
                 const results = searchKeyword(keyword);
-                displayResults(results, keyword);
+                currentResults = results;
+                isSearchMode = true;
+                currentPage = 1;
+                displayResultsWithPagination(results, keyword);
                 hideLoading();
                 scrollToResults();
                 isUpdatingFromHash = false; // 処理完了後にフラグをリセット
             }, 300);
         }
+
         // ページ読み込み時とハッシュ変更時にハッシュキーワードをチェック
         window.addEventListener('load', handleHashKeyword);
         window.addEventListener('hashchange', handleHashKeyword);
@@ -1122,7 +1404,7 @@ function displayResults(results, keyword) {
                 }
             }, 500);
         }
-        // DOMContentLoaded後にもチェック（初期化との競合回避）
+
         // DOMContentLoaded時の処理（重複登録を避ける）
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', scheduleHashCheck);
@@ -1130,170 +1412,39 @@ function displayResults(results, keyword) {
             scheduleHashCheck();
         }
 
-// 最新投稿順でページを取得する関数
-function getRecentPages() {
-    if (!currentData || !currentData.sort_dict) {
-        return [];
-    }
-    
-    // sort_dictからタイムスタンプ順でソート
-    const sortedPages = Object.keys(currentData.sort_dict)
-        .map(filePath => ({
-            file_path: filePath,
-            publish_timestamp: currentData.sort_dict[filePath].publish_timestamp,
-            publish_datetime: currentData.sort_dict[filePath].publish_datetime
-        }))
-        .sort((a, b) => b.publish_timestamp - a.publish_timestamp); // 降順（最新順）
-    
-    return sortedPages;
-}
-
-// ニックネームと投稿日時情報を取得する共通関数
-function getAuthorInfo(filePath) {
-    let authorInfo = '';
-    
-    if (currentData.nickname_dict && currentData.nickname_dict[filePath]) {
-        const nickname = currentData.nickname_dict[filePath].nickname || '匿名';
-        
-        // sort_dictから投稿日時を取得
-        let publishDate = '';
-        if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
-            publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-        
-        if (publishDate) {
-            authorInfo = `by ${nickname} ${publishDate}`;
-        } else {
-            authorInfo = `by ${nickname}`;
-        }
-    } else if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
-        // ニックネーム情報がない場合は投稿日時のみ
-        const publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        authorInfo = publishDate;
-    }
-    
-    return authorInfo;
-}
-
-// 最新投稿順の結果を表示する関数
-function displayRecentPosts() {
-    if (!currentData) {
-        return;
-    }
-    
-    const recentPages = getRecentPages();
-    const resultsGrid = document.getElementById('resultsGrid');
-    const resultsCount = document.getElementById('resultsCount');
-    const noResults = document.getElementById('noResults');
-    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
-    
-    // h2のテキストを変更
-    if (resultsInfoH2) {
-        resultsInfoH2.textContent = '最近の分析事例';
-    }
-    
-    resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
-    
-    if (recentPages.length === 0) {
-        resultsGrid.innerHTML = '';
-        noResults.style.display = 'block';
-        return;
-    }
-
-    noResults.style.display = 'none';
-    
-    resultsGrid.innerHTML = recentPages.map(page => {
-        const title = currentData.page_title_dict[page.file_path] || "無題";
-        const topKeywords = getTopKeywordsForPath(page.file_path);
-        const authorInfo = getAuthorInfo(page.file_path);
-        
-        return `
-            <a href="${page.file_path}" class="result-card">
-                <div class="result-title">${title}</div>
-                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
-                <div class="result-keywords">
-                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                </div>
-            </a>
-        `;
-    }).join('');
-}
-// 既存のperformSearch関数を拡張（元の関数は変更せず、新しい名前で作成）
-function performSearchWithRecentFallback() {
-    if (!currentData || !currentData.keyword_dict) {
-        alert('データがまだ読み込まれていません。しばらくお待ちください。');
-        return;
-    }
-
-    const searchInput = document.getElementById('searchInput');
-    const keyword = searchInput.value.trim();
-    
-    if (!keyword) {
-        // キーワードが空の場合は最新投稿順で表示
-        displayRecentPosts();
-        return;
-    }
-
-    // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
-    if (!isUpdatingFromHash) {
-        window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
-    }
-
-    currentKeyword = keyword;
-    showLoading();
-    
-    setTimeout(() => {
-        const results = searchKeyword(keyword);
-        displayResults(results, keyword);
-        hideLoading();
-    }, 500);
-}
-
-// アプリケーション初期化時に最新投稿を表示する関数
-function displayInitialContent() {
-    if (currentData && currentData.sort_dict) {
-        displayRecentPosts();
-    }
-}
-
-// 既存のinitializeApp関数の後に実行される初期化処理
-function enhancedInitialization() {
-    // データ読み込み完了をチェック
-    const checkDataAndDisplay = setInterval(() => {
-        if (currentData && currentData.sort_dict && currentData.page_title_dict) {
-            clearInterval(checkDataAndDisplay);
-            
-            // URLハッシュにキーワードがない場合は最新投稿を表示
-            const hash = window.location.hash;
-            if (!hash.startsWith('#keyword=')) {
-                setTimeout(displayInitialContent, 500);
+        // アプリケーション初期化時に最新投稿を表示する関数
+        function displayInitialContent() {
+            if (currentData && currentData.sort_dict) {
+                displayRecentPosts();
             }
         }
-    }, 100);
-    
-    // 10秒でタイムアウト
-    setTimeout(() => {
-        clearInterval(checkDataAndDisplay);
-    }, 10000);
-}
 
-// 既存のHTML onclickを置き換えるためのグローバル関数
-window.performSearch = performSearchWithRecentFallback;
+        // 既存のinitializeApp関数の後に実行される初期化処理
+        function enhancedInitialization() {
+            // データ読み込み完了をチェック
+            const checkDataAndDisplay = setInterval(() => {
+                if (currentData && currentData.sort_dict && currentData.page_title_dict) {
+                    clearInterval(checkDataAndDisplay);
+                    
+                    // URLハッシュにキーワードがない場合は最新投稿を表示
+                    const hash = window.location.hash;
+                    if (!hash.startsWith('#keyword=')) {
+                        setTimeout(displayInitialContent, 500);
+                    }
+                }
+            }, 100);
+            
+            // 10秒でタイムアウト
+            setTimeout(() => {
+                clearInterval(checkDataAndDisplay);
+            }, 10000);
+        }
 
-// 拡張初期化を実行
-enhancedInitialization();
+        // 既存のHTML onclickを置き換えるためのグローバル関数
+        window.performSearch = performSearch;
+
+        // 拡張初期化を実行
+        enhancedInitialization();
     </script>
 </body>
 </html>
