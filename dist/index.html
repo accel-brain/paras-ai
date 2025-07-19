@@ -1100,11 +1100,26 @@
         window.addEventListener('load', handleHashKeyword);
         window.addEventListener('hashchange', handleHashKeyword);
         
+        // 初期化完了後の遅延チェック用
+        let hashCheckTimeout = null;
+        
+        function scheduleHashCheck() {
+            if (hashCheckTimeout) {
+                clearTimeout(hashCheckTimeout);
+            }
+            hashCheckTimeout = setTimeout(() => {
+                if (!isUpdatingFromHash) {
+                    handleHashKeyword();
+                }
+            }, 500);
+        }
         // DOMContentLoaded後にもチェック（初期化との競合回避）
-        document.addEventListener('DOMContentLoaded', () => {
-            // 少し遅延してハッシュをチェック（初期化完了を待つ）
-            setTimeout(handleHashKeyword, 500);
-        });
+        // DOMContentLoaded時の処理（重複登録を避ける）
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', scheduleHashCheck);
+        } else {
+            scheduleHashCheck();
+        }
     </script>
 
 <script>
