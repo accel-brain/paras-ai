@@ -787,6 +787,7 @@
             if (currentData.page_title_dict) {
                 Object.keys(currentData.page_title_dict).forEach(filePath => {
                     const title = currentData.page_title_dict[filePath];
+                    if (!title) return;
                     const titleKeywords = extractKeywords(title);
                     const titleTerms = new Set();
                     titleKeywords.forEach(kw => {
