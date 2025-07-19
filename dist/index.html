@@ -840,6 +840,12 @@ function displayResults(results, keyword) {
     const resultsGrid = document.getElementById('resultsGrid');
     const resultsCount = document.getElementById('resultsCount');
     const noResults = document.getElementById('noResults');
+    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+    
+    // h2のテキストを検索結果に戻す
+    if (resultsInfoH2) {
+        resultsInfoH2.textContent = '検索結果';
+    }
     
     resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
     
@@ -867,7 +873,6 @@ function displayResults(results, keyword) {
         `;
     }).join('');
 }
-
         // file_pathに紐づく上位5つのキーワードを取得
         function getTopKeywordsForPath(filePath) {
             if (!currentData || !currentData.keyword_dict) {
@@ -1182,7 +1187,7 @@ function getAuthorInfo(filePath) {
     return authorInfo;
 }
 
-// 最新投稿順の結果を表示する関数（修正版）
+// 最新投稿順の結果を表示する関数
 function displayRecentPosts() {
     if (!currentData) {
         return;
@@ -1192,6 +1197,12 @@ function displayRecentPosts() {
     const resultsGrid = document.getElementById('resultsGrid');
     const resultsCount = document.getElementById('resultsCount');
     const noResults = document.getElementById('noResults');
+    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+    
+    // h2のテキストを変更
+    if (resultsInfoH2) {
+        resultsInfoH2.textContent = '最近の分析事例';
+    }
     
     resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
     
