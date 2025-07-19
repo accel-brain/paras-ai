@@ -836,35 +836,37 @@
         }
 
         // 検索結果表示
-        function displayResults(results, keyword) {
-            const resultsGrid = document.getElementById('resultsGrid');
-            const resultsCount = document.getElementById('resultsCount');
-            const noResults = document.getElementById('noResults');
-            
-            resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
-            
-            if (results.length === 0) {
-                resultsGrid.innerHTML = '';
-                noResults.style.display = 'block';
-                return;
-            }
+function displayResults(results, keyword) {
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    
+    resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
+    
+    if (results.length === 0) {
+        resultsGrid.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+    }
 
-            noResults.style.display = 'none';
-            
-            resultsGrid.innerHTML = results.map(result => {
-                const title = currentData.page_title_dict[result.file_path] || "無題";
-                const topKeywords = getTopKeywordsForPath(result.file_path);
-                
-                return `
-                    <a href="${result.file_path}" class="result-card">
-                        <div class="result-title">${title}</div>
-                        <div class="result-keywords">
-                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                        </div>
-                    </a>
-                `;
-            }).join('');
-        }
+    noResults.style.display = 'none';
+    
+    resultsGrid.innerHTML = results.map(result => {
+        const title = currentData.page_title_dict[result.file_path] || "無題";
+        const topKeywords = getTopKeywordsForPath(result.file_path);
+        const authorInfo = getAuthorInfo(result.file_path);
+        
+        return `
+            <a href="${result.file_path}" class="result-card">
+                <div class="result-title">${title}</div>
+                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                <div class="result-keywords">
+                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                </div>
+            </a>
+        `;
+    }).join('');
+}
 
         // file_pathに紐づく上位5つのキーワードを取得
         function getTopKeywordsForPath(filePath) {
@@ -1141,7 +1143,46 @@ function getRecentPages() {
     return sortedPages;
 }
 
-// 最新投稿順の結果を表示する関数
+// ニックネームと投稿日時情報を取得する共通関数
+function getAuthorInfo(filePath) {
+    let authorInfo = '';
+    
+    if (currentData.nickname_dict && currentData.nickname_dict[filePath]) {
+        const nickname = currentData.nickname_dict[filePath].nickname || '匿名';
+        
+        // sort_dictから投稿日時を取得
+        let publishDate = '';
+        if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
+            publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        if (publishDate) {
+            authorInfo = `by ${nickname} ${publishDate}`;
+        } else {
+            authorInfo = `by ${nickname}`;
+        }
+    } else if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
+        // ニックネーム情報がない場合は投稿日時のみ
+        const publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        authorInfo = publishDate;
+    }
+    
+    return authorInfo;
+}
+
+// 最新投稿順の結果を表示する関数（修正版）
 function displayRecentPosts() {
     if (!currentData) {
         return;
@@ -1165,19 +1206,12 @@ function displayRecentPosts() {
     resultsGrid.innerHTML = recentPages.map(page => {
         const title = currentData.page_title_dict[page.file_path] || "無題";
         const topKeywords = getTopKeywordsForPath(page.file_path);
-        const publishDate = page.publish_datetime ? 
-            new Date(page.publish_datetime).toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }) : '';
+        const authorInfo = getAuthorInfo(page.file_path);
         
         return `
             <a href="${page.file_path}" class="result-card">
                 <div class="result-title">${title}</div>
-                ${publishDate ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${publishDate}</div>` : ''}
+                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
                 <div class="result-keywords">
                     ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
                 </div>
@@ -1185,7 +1219,6 @@ function displayRecentPosts() {
         `;
     }).join('');
 }
-
 // 既存のperformSearch関数を拡張（元の関数は変更せず、新しい名前で作成）
 function performSearchWithRecentFallback() {
     if (!currentData || !currentData.keyword_dict) {
