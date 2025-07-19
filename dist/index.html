@@ -1016,7 +1016,17 @@
             
             // #keyword=で始まるハッシュをチェック
             if (hash.startsWith('#keyword=')) {
-                const keyword = decodeURIComponent(hash.substring(9)); // '#keyword='の9文字を除去
+                let keyword = hash.substring(9); // '#keyword='の9文字を除去
+                
+                // ?や&以降のパラメータを除去
+                const parameterIndex = Math.min(
+                    keyword.indexOf('?') !== -1 ? keyword.indexOf('?') : keyword.length,
+                    keyword.indexOf('&') !== -1 ? keyword.indexOf('&') : keyword.length
+                );
+                keyword = keyword.substring(0, parameterIndex);
+                
+                // URLデコード
+                keyword = decodeURIComponent(keyword);
                 
                 if (keyword && keyword.trim()) {
                     const trimmedKeyword = keyword.trim();
