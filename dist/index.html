@@ -1184,41 +1184,35 @@ function displayRecentPosts() {
     }).join('');
 }
 
-// 初期表示時または検索キーワードが空の場合の処理を追加する関数
-function handleInitialOrEmptySearch() {
+// 既存のperformSearch関数を拡張（元の関数は変更せず、新しい名前で作成）
+function performSearchWithRecentFallback() {
+    if (!currentData || !currentData.keyword_dict) {
+        alert('データがまだ読み込まれていません。しばらくお待ちください。');
+        return;
+    }
+
     const searchInput = document.getElementById('searchInput');
-    const keyword = searchInput ? searchInput.value.trim() : '';
+    const keyword = searchInput.value.trim();
     
     if (!keyword) {
         // キーワードが空の場合は最新投稿順で表示
         displayRecentPosts();
-        return true;
-    }
-    
-    return false;
-}
-
-// 既存のperformSearch関数を拡張するためのラッパー関数
-function enhancedPerformSearch() {
-    // 空の検索の場合は最新投稿順で表示
-    if (handleInitialOrEmptySearch()) {
         return;
     }
-    
-    // 既存の検索処理を実行
-    performSearch();
-}
 
-// 既存のexecuteKeywordSearch関数を拡張するためのラッパー関数
-function enhancedExecuteKeywordSearch(keyword) {
-    if (!keyword || !keyword.trim()) {
-        // キーワードが空の場合は最新投稿順で表示
-        displayRecentPosts();
-        return;
+    // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+    if (!isUpdatingFromHash) {
+        window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
     }
+
+    currentKeyword = keyword;
+    showLoading();
     
-    // 既存の検索処理を実行
-    executeKeywordSearch(keyword);
+    setTimeout(() => {
+        const results = searchKeyword(keyword);
+        displayResults(results, keyword);
+        hideLoading();
+    }, 500);
 }
 
 // アプリケーション初期化時に最新投稿を表示する関数
@@ -1227,42 +1221,6 @@ function displayInitialContent() {
         displayRecentPosts();
     }
 }
-
-// 既存のupdateResultsCount関数を拡張
-function enhancedUpdateResultsCount() {
-    updateResultsCount();
-    // 初期化完了後に最新投稿を表示
-    setTimeout(displayInitialContent, 100);
-}
-
-// イベントリスナーの置き換え
-document.addEventListener('DOMContentLoaded', function() {
-    // 検索ボタンのイベントリスナーを上書き
-    const searchButton = document.querySelector('.search-button');
-    if (searchButton) {
-        // 既存のonclick属性を削除して新しいイベントリスナーを設定
-        searchButton.removeAttribute('onclick');
-        searchButton.addEventListener('click', enhancedPerformSearch);
-    }
-    
-    // Enterキーのイベントリスナーも更新
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        // 既存のイベントリスナーを削除
-        searchInput.removeEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
-        });
-        
-        // 新しいイベントリスナーを追加
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                enhancedPerformSearch();
-            }
-        });
-    }
-});
 
 // 既存のinitializeApp関数の後に実行される初期化処理
 function enhancedInitialization() {
@@ -1284,6 +1242,9 @@ function enhancedInitialization() {
         clearInterval(checkDataAndDisplay);
     }, 10000);
 }
+
+// 既存のHTML onclickを置き換えるためのグローバル関数
+window.performSearch = performSearchWithRecentFallback;
 
 // 拡張初期化を実行
 enhancedInitialization();
