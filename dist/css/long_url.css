@@ -1,7 +1,9 @@
 @charset "UTF-8";
 
-/* すべてのリンクの基本設定 */
-a {
+/* メインコンテナ内のリンクのみの横幅問題解決 */
+
+/* メインコンテナ内のすべてのリンクの基本設定 */
+.main-container a {
     /* 長いURLを改行可能にする */
     word-break: break-all !important;
     word-wrap: break-word !important;
@@ -22,19 +24,11 @@ a {
     padding: 2px 0 !important;
 }
 
-/* ナビゲーションリンクは除外（レイアウト崩れ防止） */
-.nav-links a,
-.logo {
-    word-break: normal !important;
-    display: inline !important;
-    max-width: none !important;
-}
-
 /* スマートフォンでのURL省略表示 */
 @media screen and (max-width: 768px) {
     /* HTTP/HTTPSで始まるリンクのみに適用 */
-    a[href^="http://"],
-    a[href^="https://"] {
+    .main-container a[href^="http://"],
+    .main-container a[href^="https://"] {
         position: relative !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
@@ -45,12 +39,12 @@ a {
     }
     
     /* hover/touchで完全なURLを表示 */
-    a[href^="http://"]:hover,
-    a[href^="http://"]:focus,
-    a[href^="http://"]:active,
-    a[href^="https://"]:hover,
-    a[href^="https://"]:focus,
-    a[href^="https://"]:active {
+    .main-container a[href^="http://"]:hover,
+    .main-container a[href^="http://"]:focus,
+    .main-container a[href^="http://"]:active,
+    .main-container a[href^="https://"]:hover,
+    .main-container a[href^="https://"]:focus,
+    .main-container a[href^="https://"]:active {
         white-space: normal !important;
         word-break: break-all !important;
         max-width: 100% !important;
@@ -62,31 +56,19 @@ a {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
         position: relative !important;
     }
-    
-    /* マークダウン内のリンクも同様に処理 */
-    .markdown-body a[href^="http://"],
-    .markdown-body a[href^="https://"] {
-        max-width: 250px !important;
-    }
-    
-    /* コンテンツテキスト内のリンク */
-    .content-text a[href^="http://"],
-    .content-text a[href^="https://"] {
-        max-width: 250px !important;
-    }
 }
 
 /* 極小画面での更なる調整 */
 @media screen and (max-width: 480px) {
-    a[href^="http://"],
-    a[href^="https://"] {
+    .main-container a[href^="http://"],
+    .main-container a[href^="https://"] {
         max-width: 200px !important;
         font-size: 14px !important;
     }
     
     /* URLの前に表示する記号を追加 */
-    a[href^="http://"]:before,
-    a[href^="https://"]:before {
+    .main-container a[href^="http://"]:before,
+    .main-container a[href^="https://"]:before {
         content: "🔗 " !important;
         font-size: 12px !important;
     }
@@ -95,14 +77,14 @@ a {
 /* 代替案：CSS疑似要素でURL短縮表示（極小画面用） */
 @media screen and (max-width: 480px) {
     /* より積極的な省略表示（15文字制限） */
-    a[href^="http://"]:not(:hover):not(:focus),
-    a[href^="https://"]:not(:hover):not(:focus) {
+    .main-container a[href^="http://"]:not(:hover):not(:focus),
+    .main-container a[href^="https://"]:not(:hover):not(:focus) {
         font-size: 0 !important; /* 元のテキストを非表示 */
         max-width: 180px !important; /* 約15文字分 */
     }
     
-    a[href^="http://"]:not(:hover):not(:focus):after,
-    a[href^="https://"]:not(:hover):not(:focus):after {
+    .main-container a[href^="http://"]:not(:hover):not(:focus):after,
+    .main-container a[href^="https://"]:not(:hover):not(:focus):after {
         content: attr(href) !important;
         font-size: 14px !important;
         
@@ -116,65 +98,65 @@ a {
     }
 }
 
-/* 特定のドメインに対する表示名の改善（全体適用） */
+/* 特定のドメインに対する表示名の改善 */
 @media screen and (max-width: 480px) {
     /* 厚労省サイト */
-    a[href*="mhlw.go.jp"]:not(:hover):not(:focus):after {
+    .main-container a[href*="mhlw.go.jp"]:not(:hover):not(:focus):after {
         content: "厚労省資料..." !important;
         max-width: none !important;
     }
     
     /* 日経新聞 */
-    a[href*="nikkei.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="nikkei.com"]:not(:hover):not(:focus):after {
         content: "日経新聞..." !important;
         max-width: none !important;
     }
     
     /* note */
-    a[href*="note.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="note.com"]:not(:hover):not(:focus):after {
         content: "note記事..." !important;
         max-width: none !important;
     }
     
     /* その他の主要サイト */
-    a[href*="youtube.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="youtube.com"]:not(:hover):not(:focus):after {
         content: "YouTube..." !important;
         max-width: none !important;
     }
     
-    a[href*="twitter.com"]:not(:hover):not(:focus):after,
-    a[href*="x.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="twitter.com"]:not(:hover):not(:focus):after,
+    .main-container a[href*="x.com"]:not(:hover):not(:focus):after {
         content: "X(Twitter)..." !important;
         max-width: none !important;
     }
     
-    a[href*="facebook.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="facebook.com"]:not(:hover):not(:focus):after {
         content: "Facebook..." !important;
         max-width: none !important;
     }
     
-    a[href*="github.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="github.com"]:not(:hover):not(:focus):after {
         content: "GitHub..." !important;
         max-width: none !important;
     }
     
-    a[href*="amazon.co.jp"]:not(:hover):not(:focus):after,
-    a[href*="amazon.com"]:not(:hover):not(:focus):after {
+    .main-container a[href*="amazon.co.jp"]:not(:hover):not(:focus):after,
+    .main-container a[href*="amazon.com"]:not(:hover):not(:focus):after {
         content: "Amazon..." !important;
         max-width: none !important;
     }
     
-    a[href*="wikipedia.org"]:not(:hover):not(:focus):after {
+    .main-container a[href*="wikipedia.org"]:not(:hover):not(:focus):after {
         content: "Wikipedia..." !important;
         max-width: none !important;
     }
 }
 
-/* すべてのコンテナの横幅制御強化 */
-.source-text,
-.content-text,
-.markdown-body,
-.analysis-container {
+/* メインコンテナ内のコンテナの横幅制御強化 */
+.main-container .source-text,
+.main-container .content-text,
+.main-container .markdown-body,
+.main-container .analysis-container {
     /* コンテナ自体の横幅制御 */
     width: 100% !important;
     max-width: 100% !important;
@@ -186,10 +168,10 @@ a {
     overflow-wrap: break-word !important;
 }
 
-/* タッチデバイスでの操作性向上（全リンク対象） */
+/* タッチデバイスでの操作性向上 */
 @media screen and (max-width: 768px) and (pointer: coarse) {
-    a[href^="http://"],
-    a[href^="https://"] {
+    .main-container a[href^="http://"],
+    .main-container a[href^="https://"] {
         /* タッチターゲットサイズの確保 */
         min-height: 44px !important;
         padding: 12px 8px !important;
@@ -202,8 +184,8 @@ a {
     }
     
     /* 長押しで完全URL表示のヒント */
-    a[href^="http://"]:before,
-    a[href^="https://"]:before {
+    .main-container a[href^="http://"]:before,
+    .main-container a[href^="https://"]:before {
         content: "" !important;
         position: absolute !important;
         top: -25px !important;
@@ -220,41 +202,18 @@ a {
         z-index: 100 !important;
     }
     
-    a[href^="http://"]:hover:before,
-    a[href^="http://"]:focus:before,
-    a[href^="https://"]:hover:before,
-    a[href^="https://"]:focus:before {
+    .main-container a[href^="http://"]:hover:before,
+    .main-container a[href^="http://"]:focus:before,
+    .main-container a[href^="https://"]:hover:before,
+    .main-container a[href^="https://"]:focus:before {
         content: "タップで完全URL表示" !important;
         opacity: 1 !important;
     }
 }
 
-/* ヘッダー・フッター・ナビゲーション内のリンクは除外 */
-.header a,
-.footer a,
-.nav a,
-.nav-links a,
-.logo,
-button a {
-    word-break: normal !important;
-    white-space: nowrap !important;
-    max-width: none !important;
-    overflow: visible !important;
-    text-overflow: none !important;
-}
-
-.header a:before,
-.footer a:before,
-.nav a:before,
-.nav-links a:before,
-.logo:before,
-button a:before {
-    content: none !important;
-}
-
-/* 印刷時は完全URL表示（全リンク対象） */
+/* 印刷時は完全URL表示 */
 @media print {
-    a {
+    .main-container a {
         white-space: normal !important;
         word-break: break-all !important;
         max-width: 100% !important;
@@ -262,13 +221,13 @@ button a:before {
         page-break-inside: avoid !important;
     }
     
-    a:after {
+    .main-container a:after {
         content: none !important;
     }
     
     /* 印刷時はURL全体を表示 */
-    a[href^="http://"]:after,
-    a[href^="https://"]:after {
+    .main-container a[href^="http://"]:after,
+    .main-container a[href^="https://"]:after {
         content: " [" attr(href) "]" !important;
         font-size: 10px !important;
         color: #666 !important;
@@ -278,13 +237,13 @@ button a:before {
 /* 特殊なケース：非常に長いURLの強制改行 */
 @media screen and (max-width: 768px) {
     /* 100文字以上の非常に長いURLを強制的に改行 */
-    a[href*="?"] {
+    .main-container a[href*="?"] {
         word-break: break-all !important;
         overflow-wrap: anywhere !important;
     }
     
     /* クエリパラメータがある場合の特別処理 */
-    a[href*="?"]:not(:hover):not(:focus) {
+    .main-container a[href*="?"]:not(:hover):not(:focus) {
         max-width: 200px !important;
     }
 }
