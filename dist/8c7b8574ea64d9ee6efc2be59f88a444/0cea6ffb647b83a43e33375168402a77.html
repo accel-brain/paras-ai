@@ -1427,7 +1427,87 @@ resizeObserver.observe(document.body);
 - 自民党が、全面禁止するのではなく公開を目指すと主張する一方で、立憲民主党は、改正政治資金規正法が施行される2027年1月1日までに結論を得たいと提案したにもかかわらず、自民党が後ろ向きであると非難するのは、政治家の不誠実さが目立つ。
 - 自民党が、企業・団体献金の問題と裏金事件は関係ないと指摘するのは、矛盾している。なぜなら、政治資金規正法の改正を求める声が高まっている中で、自民党がこれを無視するのは、自民党の利益を守るために政治資金規正法を改正するつもりが無いからである。
 - 自民党が、政治家の都合で政治を進めようとしている。選挙が近づけば、選挙公約に反する法案
-`);     document.getElementById("paras_generated_text").innerHTML = html; } </script></div> <footer class="footer">         <div class="container">             <p>© 2025 PARAs AI. All rights reserved.</p>             <p>                  <a href="#top">ページトップへ</a>             </p>         </div>     </footer></body><script>
+`);     document.getElementById("paras_generated_text").innerHTML = html; } </script></div>
+    <style>
+.tag-cloud-section {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 3px;
+}
+.tag-cloud-title {
+    font-size: 1.3rem;
+    color: #666;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    line-height: 1.6;
+}
+.tag-cloud-item.size-xl {
+    font-size: 1.1rem;
+    padding: 0.6rem 1.2rem;
+}
+.tag-cloud-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 500;
+    border: none;
+    box-shadow: 0 2px 5px rgba(102, 126, 234, 0.2);
+}
+    </style>
+    
+<div class="tag-cloud-section">
+    <div class="tag-cloud-title">タグ</div>
+    <div class="tag-cloud" id="tagCloud">
+        
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('自民')">自民</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('与野党')">与野党</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('団体')">団体</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('企業')">企業</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('党派')">党派</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('衆議')">衆議</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('取り扱い')">取り扱い</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('夫婦別姓制度')">夫婦別姓制度</button>
+    
+
+<button class="tag-cloud-item size-xl" onclick="searchByTagCloud('夫婦同姓制度')">夫婦同姓制度</button>
+    
+    </div>
+</div>
+    
+    <script>
+function searchByTagCloud(keyword) {
+    window.location.href = `../index.html#keyword=${encodeURIComponent(keyword)}`;
+}
+    </script>
+     <footer class="footer">         <div class="container">             <p>© 2025 PARAs AI. All rights reserved.</p>             <p>                  <a href="#top">ページトップへ</a>             </p>         </div>     </footer></body><script>
 
 
 function generateCommentsDesign() {
