@@ -1,12 +1,12 @@
-/* スマートフォン専用スタイル (768px以下) */
+/* スマートフォン専用スタイル (480px以下) */
 
 /* 基本フォント設定 */
 html {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 body {
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1.8;
     padding-top: 90px;
     -webkit-font-smoothing: antialiased;
@@ -39,7 +39,7 @@ body {
 /* メインコンテンツ */
 .main-container {
     padding: 1rem 15px;
-    font-size: 20px;
+    font-size: 18px;
     width: 100%;
     min-width: 100%;
     max-width: 100%;
@@ -76,116 +76,116 @@ body {
 
 /* タイトルとテキスト */
 .title {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     line-height: 1.3;
 }
 
 .source-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     line-height: 1.4;
 }
 
 .content-text, .source-text {
-    font-size: 20px;
-    line-height: 1.9;
-    padding: 22px;
+    font-size: 18px;
+    line-height: 1.8;
+    padding: 20px;
 }
 
 /* マークダウンコンテンツ */
 .markdown-body {
-    font-size: 20px;
-    line-height: 1.9;
+    font-size: 18px;
+    line-height: 1.8;
     letter-spacing: 0.01em;
     word-spacing: 0.05em;
 }
 
 .markdown-body h1 {
-    font-size: 2.0rem;
+    font-size: 1.6rem;
     line-height: 1.3;
 }
 
 .markdown-body h2 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     line-height: 1.4;
 }
 
 .markdown-body p {
-    font-size: 20px;
-    line-height: 1.9;
-    margin-bottom: 22px;
+    font-size: 18px;
+    line-height: 1.8;
+    margin-bottom: 20px;
 }
 
 .markdown-body li {
-    font-size: 20px;
-    line-height: 1.9;
-    padding: 20px 22px;
+    font-size: 18px;
+    line-height: 1.8;
+    padding: 18px 20px;
 }
 
 .markdown-body blockquote {
-    font-size: 20px;
-    line-height: 1.9;
-    padding: 26px;
+    font-size: 18px;
+    line-height: 1.8;
+    padding: 22px;
 }
 
 /* ヒートマップ */
 .heatmap-text {
-    font-size: 18px;
-    line-height: 1.8;
+    font-size: 16px;
+    line-height: 1.7;
 }
 
 .heatmap-score {
-    font-size: 16px;
-    padding: 12px 18px;
+    font-size: 14px;
+    padding: 10px 16px;
 }
 
 /* ボタンとUI要素 */
 .tab-button {
-    font-size: 18px;
-    padding: 18px 26px;
+    font-size: 16px;
+    padding: 16px 22px;
     min-height: 44px;
     touch-action: manipulation;
 }
 
 .copy-button {
-    font-size: 17px;
-    padding: 18px 30px;
+    font-size: 15px;
+    padding: 16px 26px;
     min-height: 44px;
     touch-action: manipulation;
 }
 
 .download-button {
-    font-size: 17px;
-    padding: 18px 30px;
+    font-size: 15px;
+    padding: 16px 26px;
     min-height: 44px;
     touch-action: manipulation;
 }
 
 /* 凡例 */
 .legend-title {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .legend-label {
-    font-size: 17px;
+    font-size: 15px;
 }
 
 .scatter-axis-label {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* タグクラウド */
 .tag-cloud-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
 }
 
 .tag-cloud-item {
-    font-size: 17px;
-    padding: 14px 22px;
+    font-size: 15px;
+    padding: 12px 18px;
 }
 
 .tag-cloud-item.size-xl {
-    font-size: 18px;
-    padding: 16px 26px;
+    font-size: 16px;
+    padding: 14px 20px;
 }
 
 /* 日時表示 */
@@ -427,66 +427,66 @@ body {
 /* 極小画面（480px以下）での追加調整 */
 @media screen and (max-width: 480px) {
     html {
-        font-size: 22px;
+        font-size: 20px;
     }
     
     body {
-        font-size: 22px;
-        line-height: 1.9;
-    }
-    
-    .main-container {
-        font-size: 22px;
-    }
-    
-    .title {
-        font-size: 2.4rem;
-    }
-    
-    .content-text, .source-text {
-        font-size: 22px;
-        line-height: 2.0;
-        padding: 24px;
-    }
-    
-    .markdown-body {
-        font-size: 22px;
-        line-height: 2.0;
-    }
-    
-    .markdown-body h1 {
-        font-size: 2.2rem;
-    }
-    
-    .markdown-body h2 {
-        font-size: 1.7rem;
-    }
-    
-    .markdown-body p {
-        font-size: 22px;
-        line-height: 2.0;
-        margin-bottom: 24px;
-    }
-    
-    .markdown-body li {
-        font-size: 22px;
-        line-height: 2.0;
-        padding: 22px 24px;
-    }
-    
-    .markdown-body blockquote {
-        font-size: 22px;
-        line-height: 2.0;
-        padding: 28px;
-    }
-    
-    .heatmap-text {
         font-size: 20px;
         line-height: 1.9;
     }
     
-    .heatmap-score {
+    .main-container {
+        font-size: 20px;
+    }
+    
+    .title {
+        font-size: 2.0rem;
+    }
+    
+    .content-text, .source-text {
+        font-size: 20px;
+        line-height: 1.9;
+        padding: 22px;
+    }
+    
+    .markdown-body {
+        font-size: 20px;
+        line-height: 1.9;
+    }
+    
+    .markdown-body h1 {
+        font-size: 1.8rem;
+    }
+    
+    .markdown-body h2 {
+        font-size: 1.5rem;
+    }
+    
+    .markdown-body p {
+        font-size: 20px;
+        line-height: 1.9;
+        margin-bottom: 22px;
+    }
+    
+    .markdown-body li {
+        font-size: 20px;
+        line-height: 1.9;
+        padding: 20px 22px;
+    }
+    
+    .markdown-body blockquote {
+        font-size: 20px;
+        line-height: 1.9;
+        padding: 26px;
+    }
+    
+    .heatmap-text {
         font-size: 18px;
-        padding: 14px 20px;
+        line-height: 1.8;
+    }
+    
+    .heatmap-score {
+        font-size: 16px;
+        padding: 12px 18px;
     }
 }
