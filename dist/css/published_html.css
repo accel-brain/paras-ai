@@ -560,52 +560,283 @@ html {
 
 /* 全体的な文字サイズとレスポンシブ対応の改善 */
 @media screen and (max-width: 768px) {
-    /* 基本フォントサイズを大きく */
+    html {
+        font-size: 18px !important;
+    }
+    
     body {
-        font-size: 16px;
-        line-height: 1.6;
+        font-size: 18px !important;
+        line-height: 1.7 !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
     
-    /* ヘッダーの文字サイズ調整 */
+    .main-container {
+        font-size: 18px !important;
+    }
+    
     .title {
-        font-size: 1.8rem !important;
+        font-size: 2.2rem !important;
+        line-height: 1.3 !important;
     }
     
     .source-title {
-        font-size: 1.1rem !important;
+        font-size: 1.3rem !important;
+        line-height: 1.4 !important;
     }
     
-    /* コンテンツテキストのサイズ改善 */
     .content-text, .source-text {
-        font-size: 16px !important;
+        font-size: 18px !important;
         line-height: 1.8 !important;
+        padding: 20px !important;
     }
     
-    /* マークダウン本文の文字サイズ改善 */
     .markdown-body {
-        font-size: 16px !important;
+        font-size: 18px !important;
         line-height: 1.8 !important;
     }
     
     .markdown-body h1 {
-        font-size: 1.6rem !important;
+        font-size: 2.0rem !important;
+        line-height: 1.3 !important;
     }
     
     .markdown-body h2 {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
+        line-height: 1.4 !important;
     }
     
     .markdown-body p {
-        font-size: 16px !important;
+        font-size: 18px !important;
         line-height: 1.8 !important;
+        margin-bottom: 20px !important;
     }
     
     .markdown-body li {
-        font-size: 16px !important;
+        font-size: 18px !important;
         line-height: 1.8 !important;
-        padding: 16px 18px !important;
+        padding: 18px 20px !important;
+    }
+    
+    .markdown-body blockquote {
+        font-size: 18px !important;
+        line-height: 1.8 !important;
+        padding: 24px !important;
+    }
+    
+    .heatmap-text {
+        font-size: 17px !important;
+        line-height: 1.7 !important;
+    }
+    
+    .heatmap-score {
+        font-size: 15px !important;
+        padding: 10px 16px !important;
+    }
+    
+    .datetime {
+        font-size: 14px !important;
+    }
+    
+    .user_info {
+        font-size: 14px !important;
+    }
+    
+    .tab-button {
+        font-size: 17px !important;
+        padding: 16px 24px !important;
+    }
+    
+    .copy-button {
+        font-size: 16px !important;
+        padding: 16px 28px !important;
+    }
+    
+    .download-button {
+        font-size: 16px !important;
+        padding: 16px 28px !important;
+    }
+    
+    .legend-title {
+        font-size: 17px !important;
+    }
+    
+    .legend-label {
+        font-size: 16px !important;
+    }
+    
+    .scatter-axis-label {
+        font-size: 14px !important;
+    }
+    
+    .tag-cloud-title {
+        font-size: 1.4rem !important;
+    }
+    
+    .tag-cloud-item {
+        font-size: 16px !important;
+        padding: 12px 20px !important;
+    }
+    
+    .tag-cloud-item.size-xl {
+        font-size: 17px !important;
+        padding: 14px 24px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 20px !important;
+    }
+    
+    body {
+        font-size: 20px !important;
+        line-height: 1.8 !important;
+        padding-top: 90px !important;
+    }
+    
+    .main-container {
+        font-size: 20px !important;
+    }
+    
+    .title {
+        font-size: 2.0rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .source-title {
+        font-size: 1.2rem !important;
+    }
+    
+    .content-text, .source-text {
+        font-size: 20px !important;
+        line-height: 1.9 !important;
+        padding: 22px !important;
+    }
+    
+    .markdown-body {
+        font-size: 20px !important;
+        line-height: 1.9 !important;
+    }
+    
+    .markdown-body h1 {
+        font-size: 1.8rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .markdown-body h2 {
+        font-size: 1.4rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    .markdown-body p {
+        font-size: 20px !important;
+        line-height: 1.9 !important;
+        margin-bottom: 22px !important;
+    }
+    
+    .markdown-body li {
+        font-size: 20px !important;
+        line-height: 1.9 !important;
+        padding: 20px 22px !important;
+    }
+    
+    .markdown-body blockquote {
+        font-size: 20px !important;
+        line-height: 1.9 !important;
+        padding: 26px !important;
+    }
+    
+    .heatmap-text {
+        font-size: 18px !important;
+        line-height: 1.8 !important;
+    }
+    
+    .heatmap-score {
+        font-size: 16px !important;
+        padding: 12px 18px !important;
+    }
+    
+    .tab-button {
+        font-size: 18px !important;
+        padding: 18px 26px !important;
+    }
+    
+    .copy-button {
+        font-size: 17px !important;
+        padding: 18px 30px !important;
+    }
+    
+    .download-button {
+        font-size: 17px !important;
+        padding: 18px 30px !important;
+    }
+    
+    .legend-title {
+        font-size: 18px !important;
+    }
+    
+    .legend-label {
+        font-size: 17px !important;
+    }
+    
+    .tag-cloud-title {
+        font-size: 1.5rem !important;
+    }
+    
+    .tag-cloud-item {
+        font-size: 17px !important;
+        padding: 14px 22px !important;
+    }
+    
+    .tag-cloud-item.size-xl {
+        font-size: 18px !important;
+        padding: 16px 26px !important;
+    }
+}
+
+@media screen and (min-width: 481px) and (max-width: 767px) {
+    html {
+        font-size: 19px !important;
+    }
+    
+    body {
+        font-size: 19px !important;
+    }
+    
+    .content-text, .source-text {
+        font-size: 19px !important;
+    }
+    
+    .markdown-body {
+        font-size: 19px !important;
+    }
+    
+    .markdown-body p {
+        font-size: 19px !important;
+    }
+    
+    .markdown-body li {
+        font-size: 19px !important;
+    }
+    
+    .heatmap-text {
+        font-size: 18px !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    * {
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    .markdown-body,
+    .content-text,
+    .source-text {
+        letter-spacing: 0.01em !important;
+        word-spacing: 0.05em !important;
     }
 }
 
@@ -718,112 +949,267 @@ html {
 
 /* タッチデバイス向け最適化 */
 @media screen and (max-width: 768px) and (pointer: coarse) {
-    /* タッチターゲットサイズの改善 */
-    .tab-button {
-        padding: 16px 20px !important;
-        font-size: 16px !important;
-        min-height: 44px !important;
-        touch-action: manipulation !important;
-    }
-    
-    .copy-button {
-        padding: 16px 24px !important;
-        font-size: 16px !important;
-        min-height: 44px !important;
-        touch-action: manipulation !important;
-    }
-    
-    .download-button {
-        padding: 16px 24px !important;
-        font-size: 16px !important;
-        min-height: 44px !important;
-        touch-action: manipulation !important;
-    }
-    
-    /* ナビゲーションリンクのタッチ対応 */
-    .nav-links a {
-        padding: 16px 20px !important;
-        font-size: 16px !important;
-        min-height: 44px !important;
-        touch-action: manipulation !important;
-    }
-    
-    /* ヒートマップアイテムのタッチ対応 */
-    .heatmap-item {
-        padding: 20px !important;
-        touch-action: manipulation !important;
-    }
-    
-    .heatmap-score {
-        font-size: 14px !important;
-        padding: 8px 14px !important;
-    }
-}
-
-/* 極小画面（480px以下）でのさらなる最適化 */
-@media screen and (max-width: 480px) {
-    body {
-        font-size: 18px !important;
-        padding-top: 90px !important;
-    }
-    
-    .title {
-        font-size: 1.6rem !important;
-        line-height: 1.3 !important;
-    }
-    
-    .content-text, .source-text {
-        font-size: 18px !important;
-        line-height: 1.9 !important;
-        padding: 18px !important;
-    }
-    
-    .markdown-body {
-        font-size: 18px !important;
-        line-height: 1.9 !important;
-    }
-    
-    .markdown-body p {
-        font-size: 18px !important;
-        line-height: 1.9 !important;
-        margin-bottom: 18px !important;
-    }
-    
-    .markdown-body h1 {
-        font-size: 1.5rem !important;
-        line-height: 1.3 !important;
-    }
-    
-    .markdown-body h2 {
-        font-size: 1.2rem !important;
-        line-height: 1.3 !important;
-    }
-    
-    .markdown-body li {
-        font-size: 18px !important;
-        line-height: 1.9 !important;
-        padding: 18px 20px !important;
-    }
-    
-    /* ヒートマップテキストサイズの改善 */
-    .heatmap-text {
-        font-size: 16px !important;
-        line-height: 1.7 !important;
-    }
+   /* タッチターゲットサイズの改善 */
+   .tab-button {
+       padding: 16px 20px !important;
+       font-size: 16px !important;
+       min-height: 44px !important;
+       touch-action: manipulation !important;
+   }
+   
+   .copy-button {
+       padding: 16px 24px !important;
+       font-size: 16px !important;
+       min-height: 44px !important;
+       touch-action: manipulation !important;
+   }
+   
+   .download-button {
+       padding: 16px 24px !important;
+       font-size: 16px !important;
+       min-height: 44px !important;
+       touch-action: manipulation !important;
+   }
+   
+   /* ナビゲーションリンクのタッチ対応 */
+   .nav-links a {
+       padding: 16px 20px !important;
+       font-size: 16px !important;
+       min-height: 44px !important;
+       touch-action: manipulation !important;
+   }
+   
+   /* ヒートマップアイテムのタッチ対応 */
+   .heatmap-item {
+       padding: 20px !important;
+       touch-action: manipulation !important;
+   }
+   
+   .heatmap-score {
+       font-size: 14px !important;
+       padding: 8px 14px !important;
+   }
 }
 
 /* iOS Safari特有の問題への対処 */
 @supports (-webkit-appearance: none) {
-    @media screen and (max-width: 768px) {
-        body {
-            -webkit-overflow-scrolling: touch !important;
-        }
-        
-        #heatmap-container_066fdf88,
-        #heatmap-view_066fdf88,
-        #scatter-view_066fdf88 {
-            -webkit-overflow-scrolling: touch !important;
-            -webkit-transform: translate3d(0, 0, 0) !important;
-        }
-    }
+   @media screen and (max-width: 768px) {
+       body {
+           -webkit-overflow-scrolling: touch !important;
+       }
+       
+       #heatmap-container_066fdf88,
+       #heatmap-view_066fdf88,
+       #scatter-view_066fdf88 {
+           -webkit-overflow-scrolling: touch !important;
+           -webkit-transform: translate3d(0, 0, 0) !important;
+       }
+   }
+}
+
+/* メインコンテナ内のリンクのみの横幅問題解決 */
+.main-container a {
+   word-break: break-all !important;
+   word-wrap: break-word !important;
+   overflow-wrap: break-word !important;
+   hyphens: auto !important;
+   -webkit-hyphens: auto !important;
+   -ms-hyphens: auto !important;
+   display: inline-block !important;
+   max-width: 100% !important;
+   line-height: 1.4 !important;
+   text-decoration: underline !important;
+   padding: 2px 0 !important;
+}
+
+@media screen and (max-width: 768px) {
+   .main-container a[href^="http://"],
+   .main-container a[href^="https://"] {
+       position: relative !important;
+       overflow: hidden !important;
+       text-overflow: ellipsis !important;
+       white-space: nowrap !important;
+       max-width: 280px !important;
+       display: inline-block !important;
+       vertical-align: top !important;
+   }
+   
+   .main-container a[href^="http://"]:hover,
+   .main-container a[href^="http://"]:focus,
+   .main-container a[href^="http://"]:active,
+   .main-container a[href^="https://"]:hover,
+   .main-container a[href^="https://"]:focus,
+   .main-container a[href^="https://"]:active {
+       white-space: normal !important;
+       word-break: break-all !important;
+       max-width: 100% !important;
+       overflow: visible !important;
+       z-index: 10 !important;
+       background-color: rgba(255, 255, 255, 0.95) !important;
+       padding: 4px 8px !important;
+       border-radius: 4px !important;
+       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+       position: relative !important;
+   }
+}
+
+@media screen and (max-width: 480px) {
+   .main-container a[href^="http://"],
+   .main-container a[href^="https://"] {
+       max-width: 200px !important;
+       font-size: 14px !important;
+   }
+   
+   .main-container a[href^="http://"]:before,
+   .main-container a[href^="https://"]:before {
+       content: "🔗 " !important;
+       font-size: 12px !important;
+   }
+   
+   .main-container a[href^="http://"]:not(:hover):not(:focus),
+   .main-container a[href^="https://"]:not(:hover):not(:focus) {
+       font-size: 0 !important;
+       max-width: 180px !important;
+   }
+   
+   .main-container a[href^="http://"]:not(:hover):not(:focus):after,
+   .main-container a[href^="https://"]:not(:hover):not(:focus):after {
+       content: attr(href) !important;
+       font-size: 14px !important;
+       display: inline-block !important;
+       max-width: 150px !important;
+       overflow: hidden !important;
+       text-overflow: ellipsis !important;
+       white-space: nowrap !important;
+       vertical-align: top !important;
+   }
+   
+   .main-container a[href*="mhlw.go.jp"]:not(:hover):not(:focus):after {
+       content: "厚労省資料..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="nikkei.com"]:not(:hover):not(:focus):after {
+       content: "日経新聞..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="note.com"]:not(:hover):not(:focus):after {
+       content: "note記事..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="youtube.com"]:not(:hover):not(:focus):after {
+       content: "YouTube..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="twitter.com"]:not(:hover):not(:focus):after,
+   .main-container a[href*="x.com"]:not(:hover):not(:focus):after {
+       content: "X(Twitter)..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="facebook.com"]:not(:hover):not(:focus):after {
+       content: "Facebook..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="github.com"]:not(:hover):not(:focus):after {
+       content: "GitHub..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="amazon.co.jp"]:not(:hover):not(:focus):after,
+   .main-container a[href*="amazon.com"]:not(:hover):not(:focus):after {
+       content: "Amazon..." !important;
+       max-width: none !important;
+   }
+   
+   .main-container a[href*="wikipedia.org"]:not(:hover):not(:focus):after {
+       content: "Wikipedia..." !important;
+       max-width: none !important;
+   }
+}
+
+.main-container .source-text,
+.main-container .content-text,
+.main-container .markdown-body,
+.main-container .analysis-container {
+   width: 100% !important;
+   max-width: 100% !important;
+   overflow-x: hidden !important;
+   box-sizing: border-box !important;
+   word-wrap: break-word !important;
+   overflow-wrap: break-word !important;
+}
+
+@media screen and (max-width: 768px) and (pointer: coarse) {
+   .main-container a[href^="http://"],
+   .main-container a[href^="https://"] {
+       min-height: 44px !important;
+       padding: 12px 8px !important;
+       margin: 4px 0 !important;
+       display: inline-block !important;
+       touch-action: manipulation !important;
+       -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2) !important;
+   }
+   
+   .main-container a[href^="http://"]:before,
+   .main-container a[href^="https://"]:before {
+       content: "" !important;
+       position: absolute !important;
+       top: -25px !important;
+       left: 0 !important;
+       background: rgba(0, 0, 0, 0.8) !important;
+       color: white !important;
+       padding: 4px 8px !important;
+       border-radius: 4px !important;
+       font-size: 12px !important;
+       white-space: nowrap !important;
+       opacity: 0 !important;
+       transition: opacity 0.3s ease !important;
+       pointer-events: none !important;
+       z-index: 100 !important;
+   }
+   
+   .main-container a[href^="http://"]:hover:before,
+   .main-container a[href^="http://"]:focus:before,
+   .main-container a[href^="https://"]:hover:before,
+   .main-container a[href^="https://"]:focus:before {
+       content: "タップで完全URL表示" !important;
+       opacity: 1 !important;
+   }
+}
+
+@media print {
+   .main-container a {
+       white-space: normal !important;
+       word-break: break-all !important;
+       max-width: 100% !important;
+       font-size: 12px !important;
+       page-break-inside: avoid !important;
+   }
+   
+   .main-container a:after {
+       content: none !important;
+   }
+   
+   .main-container a[href^="http://"]:after,
+   .main-container a[href^="https://"]:after {
+       content: " [" attr(href) "]" !important;
+       font-size: 10px !important;
+       color: #666 !important;
+   }
+}
+
+@media screen and (max-width: 768px) {
+   .main-container a[href*="?"] {
+       word-break: break-all !important;
+       overflow-wrap: anywhere !important;
+   }
+   
+   .main-container a[href*="?"]:not(:hover):not(:focus) {
+       max-width: 200px !important;
+   }
 }
