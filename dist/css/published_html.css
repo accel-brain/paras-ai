@@ -442,6 +442,7 @@ ul li.show-icon .copy-icon {
 @media (max-width: 480px) {
     body {
         padding-top: 80px;
+        /* font-size: 18px !important; この行を削除（もし存在する場合） */
     }
     
     .header {
@@ -467,7 +468,7 @@ ul li.show-icon .copy-icon {
     }
     
     .title {
-        font-size: 1.3rem;
+        /* font-size: 1.3rem; この行を削除 */
     }
     
     .analysis-container {
