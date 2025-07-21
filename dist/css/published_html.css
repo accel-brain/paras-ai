@@ -497,12 +497,12 @@ html {
 
 @media screen and (max-width: 768px) {
    html {
-       font-size: 18px !important;
+       font-size: 18px ; /* !important; */
    }
    
    body {
-       font-size: 18px; /*!important;*/
-       line-height: 1.7 !important;
+       font-size: 18px; /*; /* !important; */*/
+       line-height: 1.7 ; /* !important; */
        -webkit-font-smoothing: antialiased;
        -moz-osx-font-smoothing: grayscale;
    }
@@ -522,148 +522,148 @@ html {
    
    .main-container {
        padding: 1rem 15px;
-       font-size: 18px; /*!important;*/
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       overflow-x: hidden !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       font-size: 18px; /*; /* !important; */*/
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       overflow-x: hidden ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    .content-card {
        padding: 20px;
        border-radius: 15px;
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       box-sizing: border-box !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       box-sizing: border-box ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    .content-card:hover {
-       transform: none !important;
-       -webkit-transform: none !important;
+       transform: none ; /* !important; */
+       -webkit-transform: none ; /* !important; */
    }
    
    .title {
-       font-size: 2.2rem; /*!important;*/
-       line-height: 1.3 !important;
+       font-size: 2.2rem; /*; /* !important; */*/
+       line-height: 1.3 ; /* !important; */
    }
    
    .source-title {
-       font-size: 1.3rem; /*!important;*/
-       line-height: 1.4 !important;
+       font-size: 1.3rem; /*; /* !important; */*/
+       line-height: 1.4 ; /* !important; */
    }
    
    .content-text, .source-text {
-       font-size: 18px; /*!important;*/
-       line-height: 1.8 !important;
-       padding: 20px !important;
+       font-size: 18px; /*; /* !important; */*/
+       line-height: 1.8 ; /* !important; */
+       padding: 20px ; /* !important; */
    }
    
    .analysis-container {
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       box-sizing: border-box !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       box-sizing: border-box ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    .markdown-body {
-       font-size: 18px; /*!important;*/
-       line-height: 1.8 !important;
-       letter-spacing: 0.01em !important;
-       word-spacing: 0.05em !important;
+       font-size: 18px; /*; /* !important; */*/
+       line-height: 1.8 ; /* !important; */
+       letter-spacing: 0.01em ; /* !important; */
+       word-spacing: 0.05em ; /* !important; */
    }
    
    .markdown-body h1 {
-       font-size: 2.0rem; /*!important;*/
-       line-height: 1.3 !important;
+       font-size: 2.0rem; /*; /* !important; */*/
+       line-height: 1.3 ; /* !important; */
    }
    
    .markdown-body h2 {
-       font-size: 1.5rem; /*!important;*/
-       line-height: 1.4 !important;
+       font-size: 1.5rem; /*; /* !important; */*/
+       line-height: 1.4 ; /* !important; */
    }
    
    .markdown-body p {
-       font-size: 18px; /*!important;*/
-       line-height: 1.8 !important;
-       margin-bottom: 20px !important;
+       font-size: 18px; /*; /* !important; */*/
+       line-height: 1.8 ; /* !important; */
+       margin-bottom: 20px ; /* !important; */
    }
    
    .markdown-body li {
-       font-size: 18px !important;
-       line-height: 1.8 !important;
-       padding: 18px 20px !important;
+       font-size: 18px ; /* !important; */
+       line-height: 1.8 ; /* !important; */
+       padding: 18px 20px ; /* !important; */
    }
    
    .markdown-body blockquote {
-       font-size: 18px !important;
-       line-height: 1.8 !important;
-       padding: 24px !important;
+       font-size: 18px ; /* !important; */
+       line-height: 1.8 ; /* !important; */
+       padding: 24px ; /* !important; */
    }
    
    .heatmap-text {
-       font-size: 17px !important;
-       line-height: 1.7 !important;
+       font-size: 17px ; /* !important; */
+       line-height: 1.7 ; /* !important; */
    }
    
    .heatmap-score {
-       font-size: 15px !important;
-       padding: 10px 16px !important;
+       font-size: 15px ; /* !important; */
+       padding: 10px 16px ; /* !important; */
    }
    
    .datetime {
-       font-size: 14px !important;
+       font-size: 14px ; /* !important; */
    }
    
    .user_info {
-       font-size: 14px !important;
+       font-size: 14px ; /* !important; */
    }
    
    .tab-button {
-       font-size: 17px !important;
-       padding: 16px 24px !important;
+       font-size: 17px ; /* !important; */
+       padding: 16px 24px ; /* !important; */
    }
    
    .copy-button {
-       font-size: 16px !important;
-       padding: 16px 28px !important;
+       font-size: 16px ; /* !important; */
+       padding: 16px 28px ; /* !important; */
    }
    
    .download-button {
-       font-size: 16px !important;
-       padding: 16px 28px !important;
+       font-size: 16px ; /* !important; */
+       padding: 16px 28px ; /* !important; */
    }
    
    .legend-title {
-       font-size: 17px !important;
+       font-size: 17px ; /* !important; */
    }
    
    .legend-label {
-       font-size: 16px !important;
+       font-size: 16px ; /* !important; */
    }
    
    .scatter-axis-label {
-       font-size: 14px !important;
+       font-size: 14px ; /* !important; */
    }
    
    .tag-cloud-title {
-       font-size: 1.4rem !important;
+       font-size: 1.4rem ; /* !important; */
    }
    
    .tag-cloud-item {
-       font-size: 16px !important;
-       padding: 12px 20px !important;
+       font-size: 16px ; /* !important; */
+       padding: 12px 20px ; /* !important; */
    }
    
    .tag-cloud-item.size-xl {
-       font-size: 17px !important;
-       padding: 14px 24px !important;
+       font-size: 17px ; /* !important; */
+       padding: 14px 24px ; /* !important; */
    }
    
    .copy_feedback {
@@ -674,13 +674,13 @@ html {
    
    .main-container a[href^="http://"],
    .main-container a[href^="https://"] {
-       position: relative !important;
-       overflow: hidden !important;
-       text-overflow: ellipsis !important;
-       white-space: nowrap !important;
-       max-width: 280px !important;
-       display: inline-block !important;
-       vertical-align: top !important;
+       position: relative ; /* !important; */
+       overflow: hidden ; /* !important; */
+       text-overflow: ellipsis ; /* !important; */
+       white-space: nowrap ; /* !important; */
+       max-width: 280px ; /* !important; */
+       display: inline-block ; /* !important; */
+       vertical-align: top ; /* !important; */
    }
    
    .main-container a[href^="http://"]:hover,
@@ -689,111 +689,111 @@ html {
    .main-container a[href^="https://"]:hover,
    .main-container a[href^="https://"]:focus,
    .main-container a[href^="https://"]:active {
-       white-space: normal !important;
-       word-break: break-all !important;
-       max-width: 100% !important;
-       overflow: visible !important;
-       z-index: 10 !important;
-       background-color: rgba(255, 255, 255, 0.95) !important;
-       padding: 4px 8px !important;
-       border-radius: 4px !important;
-       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-       position: relative !important;
+       white-space: normal ; /* !important; */
+       word-break: break-all ; /* !important; */
+       max-width: 100% ; /* !important; */
+       overflow: visible ; /* !important; */
+       z-index: 10 ; /* !important; */
+       background-color: rgba(255, 255, 255, 0.95) ; /* !important; */
+       padding: 4px 8px ; /* !important; */
+       border-radius: 4px ; /* !important; */
+       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) ; /* !important; */
+       position: relative ; /* !important; */
    }
    
    .main-container a[href*="?"] {
-       word-break: break-all !important;
-       overflow-wrap: anywhere !important;
+       word-break: break-all ; /* !important; */
+       overflow-wrap: anywhere ; /* !important; */
    }
    
    .main-container a[href*="?"]:not(:hover):not(:focus) {
-       max-width: 200px !important;
+       max-width: 200px ; /* !important; */
    }
    
    #heatmap-container_066fdf88 {
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       box-sizing: border-box !important;
-       overflow: hidden !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
-       will-change: auto !important;
-       flex-shrink: 0 !important;
-       flex-grow: 1 !important;
-       flex-basis: auto !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       box-sizing: border-box ; /* !important; */
+       overflow: hidden ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
+       will-change: auto ; /* !important; */
+       flex-shrink: 0 ; /* !important; */
+       flex-grow: 1 ; /* !important; */
+       flex-basis: auto ; /* !important; */
    }
    
    .heatmap-item {
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       box-sizing: border-box !important;
-       flex-shrink: 0 !important;
-       transform: none !important;
-       -webkit-transform: none !important;
-       transition: none !important;
-       -webkit-transition: none !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       box-sizing: border-box ; /* !important; */
+       flex-shrink: 0 ; /* !important; */
+       transform: none ; /* !important; */
+       -webkit-transform: none ; /* !important; */
+       transition: none ; /* !important; */
+       -webkit-transition: none ; /* !important; */
    }
    
    #heatmap-view_066fdf88 {
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       overflow: hidden !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       overflow: hidden ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    #scatter-view_066fdf88 {
-       width: 100% !important;
-       min-width: 100% !important;
-       max-width: 100% !important;
-       overflow: hidden !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       width: 100% ; /* !important; */
+       min-width: 100% ; /* !important; */
+       max-width: 100% ; /* !important; */
+       overflow: hidden ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    .scatter-container {
-       width: 90% !important;
-       max-width: 90% !important;
-       min-width: 90% !important;
-       transform: translateZ(0) !important;
-       -webkit-transform: translateZ(0) !important;
+       width: 90% ; /* !important; */
+       max-width: 90% ; /* !important; */
+       min-width: 90% ; /* !important; */
+       transform: translateZ(0) ; /* !important; */
+       -webkit-transform: translateZ(0) ; /* !important; */
    }
    
    * {
-       -webkit-font-smoothing: antialiased !important;
-       -moz-osx-font-smoothing: grayscale !important;
-       text-rendering: optimizeLegibility !important;
+       -webkit-font-smoothing: antialiased ; /* !important; */
+       -moz-osx-font-smoothing: grayscale ; /* !important; */
+       text-rendering: optimizeLegibility ; /* !important; */
    }
 }
 
 @media screen and (max-width: 768px) and (pointer: coarse) {
    .tab-button {
        padding: 16px 20px !important;
-       font-size: 16px !important;
+       font-size: 16px; /*!important;*/
        min-height: 44px !important;
        touch-action: manipulation !important;
    }
    
    .copy-button {
        padding: 16px 24px !important;
-       font-size: 16px !important;
+       font-size: 16px; /*!important;*/
        min-height: 44px !important;
        touch-action: manipulation !important;
    }
    
    .download-button {
        padding: 16px 24px !important;
-       font-size: 16px !important;
+       font-size: 16px; /*!important;*/
        min-height: 44px !important;
        touch-action: manipulation !important;
    }
    
    .nav-links a {
        padding: 16px 20px !important;
-       font-size: 16px !important;
+       font-size: 16px; /*!important;*/
        min-height: 44px !important;
        touch-action: manipulation !important;
    }
@@ -804,7 +804,7 @@ html {
    }
    
    .heatmap-score {
-       font-size: 14px !important;
+       font-size: 14px; /*!important;*/
        padding: 8px 14px !important;
    }
    
@@ -828,7 +828,7 @@ html {
        color: white !important;
        padding: 4px 8px !important;
        border-radius: 4px !important;
-       font-size: 12px !important;
+       font-size: 12px; /*!important;*/
        white-space: nowrap !important;
        opacity: 0 !important;
        transition: opacity 0.3s ease !important;
