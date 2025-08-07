@@ -871,3 +871,196 @@
 
         // 拡張初期化を実行
         enhancedInitialization();
+
+
+// ユーザー検索機能の実装
+function handleHashUser() {
+    if (isUpdatingFromHash) return; // 無限ループ防止
+    
+    const hash = window.location.hash;
+    
+    // #user=で始まるハッシュをチェック
+    if (hash.startsWith('#user=')) {
+        let userId = hash.substring(6); // '#user='の6文字を除去
+        
+        // ?や&以降のパラメータを除去
+        const parameterIndex = Math.min(
+            userId.indexOf('?') !== -1 ? userId.indexOf('?') : userId.length,
+            userId.indexOf('&') !== -1 ? userId.indexOf('&') : userId.length
+        );
+        userId = userId.substring(0, parameterIndex);
+        
+        // URLデコード
+        userId = decodeURIComponent(userId);
+        
+        if (userId && userId.trim()) {
+            const trimmedUserId = userId.trim();
+            console.log('URLハッシュからユーザーIDを検出:', trimmedUserId);
+            
+            // フラグを設定してハッシュ更新による処理であることを示す
+            isUpdatingFromHash = true;
+            
+            // 検索入力フォームをクリア
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            // データが読み込まれている場合は即座にユーザー検索実行
+            if (currentData && currentData.keyword_dict) {
+                executeUserSearchFromHash(trimmedUserId);
+            } else {
+                // データ読み込み完了まで待機してからユーザー検索実行
+                const checkDataInterval = setInterval(() => {
+                    if (currentData && currentData.keyword_dict) {
+                        clearInterval(checkDataInterval);
+                        executeUserSearchFromHash(trimmedUserId);
+                    }
+                }, 100);
+                
+                // 10秒でタイムアウト
+                setTimeout(() => {
+                    clearInterval(checkDataInterval);
+                    isUpdatingFromHash = false;
+                }, 10000);
+            }
+        }
+    }
+}
+
+// ユーザー検索を実行する関数（ハッシュ更新なし）
+function executeUserSearchFromHash(userId) {
+    if (!currentData || !currentData.keyword_dict) {
+        isUpdatingFromHash = false;
+        return;
+    }
+
+    showLoading();
+    
+    setTimeout(() => {
+        const results = searchByUser(userId);
+        currentResults = results;
+        isSearchMode = true;
+        currentPage = 1;
+        displayUserResults(results, userId);
+        hideLoading();
+        scrollToResults();
+        isUpdatingFromHash = false; // 処理完了後にフラグをリセット
+    }, 300);
+}
+
+// ユーザー検索関数
+function searchByUser(userId) {
+    const results = [];
+    
+    console.log('ユーザー検索:', userId);
+    
+    // keyword_dictの全てのアイテムをチェック
+    Object.keys(currentData.keyword_dict).forEach(keyword => {
+        const items = currentData.keyword_dict[keyword];
+        items.forEach(item => {
+            if (item.file_path) {
+                // file_pathからユーザーIDを抽出（logs/{userId}/ファイル名の形式）
+                const pathParts = item.file_path.split('/');
+                if (pathParts.length >= 2 && pathParts[0] === 'logs') {
+                    const fileUserId = pathParts[1];
+                    if (fileUserId === userId) {
+                        // 重複チェック
+                        const existingResult = results.find(r => r.file_path === item.file_path);
+                        if (!existingResult || existingResult.weight < item.weight) {
+                            // 重複がない場合は追加、重複がある場合はweightの高い方を保持
+                            if (existingResult) {
+                                const index = results.indexOf(existingResult);
+                                results[index] = item;
+                            } else {
+                                results.push(item);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    
+    console.log(`ユーザー${userId}の検索結果:`, results.length, '件');
+    
+    // weight順にソート
+    return results.sort((a, b) => b.weight - a.weight);
+}
+
+// ユーザー検索結果を表示
+function displayUserResults(results, userId) {
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+    
+    // h2のテキストを変更
+    if (resultsInfoH2) {
+        resultsInfoH2.textContent = 'ユーザー検索結果';
+    }
+    
+    resultsCount.textContent = `ユーザー "${userId}" の投稿: ${results.length}件`;
+    
+    if (results.length === 0) {
+        resultsGrid.innerHTML = '';
+        noResults.style.display = 'block';
+        hidePagination();
+        return;
+    }
+
+    noResults.style.display = 'none';
+    
+    // ページネーション用のデータ計算
+    const totalPages = Math.ceil(results.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageResults = results.slice(startIndex, endIndex);
+    
+    resultsGrid.innerHTML = currentPageResults.map(result => {
+        const title = currentData.page_title_dict[result.file_path] || "無題";
+        const topKeywords = getTopKeywordsForPath(result.file_path);
+        const authorInfo = getAuthorInfo(result.file_path);
+        
+        return `
+            <a href="${result.file_path}" class="result-card">
+                <div class="result-title">${title}</div>
+                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                <div class="result-keywords">
+                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                </div>
+            </a>
+        `;
+    }).join('');
+    
+    // ページネーションコントロールを表示
+    if (totalPages > 1) {
+        showPagination(currentPage, totalPages, results.length);
+    } else {
+        hidePagination();
+    }
+}
+
+// 既存のhandleHashKeyword関数を更新してユーザー検索も処理できるように
+const originalHandleHashKeyword = handleHashKeyword;
+handleHashKeyword = function() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#user=')) {
+        handleHashUser();
+    } else {
+        originalHandleHashKeyword();
+    }
+};
+
+// イベントリスナーにユーザー検索も追加
+window.addEventListener('hashchange', function() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#user=')) {
+        handleHashUser();
+    } else {
+        handleHashKeyword();
+    }
+});
+
+
+
