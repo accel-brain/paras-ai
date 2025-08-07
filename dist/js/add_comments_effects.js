@@ -123,3 +123,54 @@ document.addEventListener('DOMContentLoaded', function() {
         addHoverEffects();
     }, 500);
 });
+
+// user_info要素のnicknameをリンクに変換する関数
+function convertUserInfoNicknames() {
+    // 現在のURLからuserIDを抽出
+    function extractUserFromURL() {
+        const currentURL = window.location.href;
+        // URLパターン: https://{root}/logs/{user}/{filename}.html
+        // /logs/の後の最初のパス要素を取得
+        const match = currentURL.match(/\/logs\/([^\/]+)\//);
+        return match ? match[1] : null;
+    }
+
+    // class名が"user_info"の全要素を取得
+    const userInfoElements = document.querySelectorAll('.user_info');
+    
+    // 抽出したuserIDを取得
+    const userId = extractUserFromURL();
+    
+    if (!userId) {
+        console.warn('URLからuserIDを抽出できませんでした:', window.location.href);
+        return;
+    }
+
+    // 各user_info要素を処理
+    userInfoElements.forEach(element => {
+        const text = element.textContent || element.innerText;
+        
+        // "by {nickname} {datetime}"の形式をチェック
+        const byPattern = /^by\s+(\S+)\s+(.+)$/;
+        const match = text.match(byPattern);
+        
+        if (match) {
+            const nickname = match[1];
+            const datetime = match[2];
+            
+            // 遷移先URLを構築
+            const linkURL = `../../index.html#user=${userId}`;
+            
+            // HTMLを更新（nicknameをリンクに変換）
+            element.innerHTML = `by <a href="${linkURL}" target="_blank">${nickname}</a> ${datetime}`;
+        }
+    });
+}
+
+// DOM読み込み完了後に実行
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', convertUserInfoNicknames);
+} else {
+    // すでにDOM読み込みが完了している場合は即座に実行
+    convertUserInfoNicknames();
+}
