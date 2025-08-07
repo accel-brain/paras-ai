@@ -1,4 +1,34 @@
-
+// FontAwesome利用可能性をチェックする関数
+function checkFontAwesomeAvailability() {
+    try {
+        // FontAwesome CSSリンクの存在チェック
+        const fontAwesomeLink = document.querySelector('link[href*="font-awesome"]');
+        if (!fontAwesomeLink) {
+            return false;
+        }
+        
+        // テスト要素を作成してFontAwesome適用状況をチェック
+        const testElement = document.createElement('i');
+        testElement.className = 'fas fa-heart';
+        testElement.style.position = 'absolute';
+        testElement.style.left = '-9999px';
+        testElement.style.visibility = 'hidden';
+        document.body.appendChild(testElement);
+        
+        // FontAwesome特有のスタイルプロパティをチェック
+        const computedStyle = window.getComputedStyle(testElement, ':before');
+        const fontFamily = computedStyle.getPropertyValue('font-family');
+        
+        // テスト要素を削除
+        document.body.removeChild(testElement);
+        
+        // FontAwesome固有のフォントファミリーが適用されているかチェック
+        return fontFamily && (fontFamily.includes('Font Awesome') || fontFamily.includes('FontAwesome'));
+    } catch (error) {
+        console.warn('FontAwesome可用性チェックでエラーが発生しました:', error);
+        return false;
+    }
+}
 
 function generateCommentsDesign() {
     // FontAwesome利用可能性をチェック
