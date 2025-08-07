@@ -2,7 +2,7 @@
         let currentData = null;
         let currentKeyword = '';
         let isUpdatingFromHash = false;
-        
+        let currentUserId = '';
         // ページネーション関連の変数
         let currentPage = 1;
         let itemsPerPage = 9;
@@ -551,7 +551,13 @@
             if (currentPage < totalPages) {
                 currentPage++;
                 if (isSearchMode) {
-                    displayResultsWithPagination(currentResults, currentKeyword);
+                    if (currentUserId) {
+                        // ユーザー検索モードの場合
+                        displayUserResults(currentResults, currentUserId);
+                    } else {
+                        // キーワード検索モードの場合
+                        displayResultsWithPagination(currentResults, currentKeyword);
+                    }
                 } else {
                     displayRecentPosts();
                 }
@@ -564,7 +570,13 @@
             if (currentPage > 1) {
                 currentPage--;
                 if (isSearchMode) {
-                    displayResultsWithPagination(currentResults, currentKeyword);
+                    if (currentUserId) {
+                        // ユーザー検索モードの場合
+                        displayUserResults(currentResults, currentUserId);
+                    } else {
+                        // キーワード検索モードの場合
+                        displayResultsWithPagination(currentResults, currentKeyword);
+                    }
                 } else {
                     displayRecentPosts();
                 }
@@ -732,64 +744,111 @@
             console.error('アプリケーションエラー:', event.error);
         });
 
-        // URLハッシュ値からキーワードを抽出して検索する機能
-        function handleHashKeyword() {
-            if (isUpdatingFromHash) return; // 無限ループ防止
+// URLハッシュ値からキーワードまたはユーザーを抽出して検索する機能
+function handleHashKeyword() {
+    if (isUpdatingFromHash) return; // 無限ループ防止
+    
+    const hash = window.location.hash;
+    
+    // #user=で始まるハッシュをチェック
+    if (hash.startsWith('#user=')) {
+        let userId = hash.substring(6); // '#user='の6文字を除去
+        
+        // ?や&以降のパラメータを除去
+        const parameterIndex = Math.min(
+            userId.indexOf('?') !== -1 ? userId.indexOf('?') : userId.length,
+            userId.indexOf('&') !== -1 ? userId.indexOf('&') : userId.length
+        );
+        userId = userId.substring(0, parameterIndex);
+        
+        // URLデコード
+        userId = decodeURIComponent(userId);
+        
+        if (userId && userId.trim()) {
+            const trimmedUserId = userId.trim();
+            console.log('URLハッシュからユーザーIDを検出:', trimmedUserId);
             
-            const hash = window.location.hash;
+            // フラグを設定してハッシュ更新による処理であることを示す
+            isUpdatingFromHash = true;
             
-            // #keyword=で始まるハッシュをチェック
-            if (hash.startsWith('#keyword=')) {
-                let keyword = hash.substring(9); // '#keyword='の9文字を除去
-                
-                // ?や&以降のパラメータを除去
-                const parameterIndex = Math.min(
-                    keyword.indexOf('?') !== -1 ? keyword.indexOf('?') : keyword.length,
-                    keyword.indexOf('&') !== -1 ? keyword.indexOf('&') : keyword.length
-                );
-                keyword = keyword.substring(0, parameterIndex);
-                
-                // URLデコード
-                keyword = decodeURIComponent(keyword);
-                
-                if (keyword && keyword.trim()) {
-                    const trimmedKeyword = keyword.trim();
-                    console.log('URLハッシュからキーワードを検出:', trimmedKeyword);
-                    
-                    // フラグを設定してハッシュ更新による処理であることを示す
-                    isUpdatingFromHash = true;
-                    
-                    // 入力フォームにキーワードを設定
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = trimmedKeyword;
-                        
-                        // 視覚的フィードバック
-                        searchInput.focus();
-                        searchInput.select();
-                    }
-                    
-                    // データが読み込まれている場合は即座に検索実行
+            // 検索入力フォームをクリア
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            // データが読み込まれている場合は即座にユーザー検索実行
+            if (currentData && currentData.keyword_dict) {
+                executeUserSearchFromHash(trimmedUserId);
+            } else {
+                // データ読み込み完了まで待機してからユーザー検索実行
+                const checkDataInterval = setInterval(() => {
                     if (currentData && currentData.keyword_dict) {
-                        executeKeywordSearchFromHash(trimmedKeyword);
-                    } else {
-                        // データ読み込み完了まで待機してから検索実行
-                        const checkDataInterval = setInterval(() => {
-                            if (currentData && currentData.keyword_dict) {
-                                clearInterval(checkDataInterval);
-                                executeKeywordSearchFromHash(trimmedKeyword);
-                            }
-                        }, 100);
-                        
-                        // 10秒でタイムアウト
-                        setTimeout(() => {
-                            clearInterval(checkDataInterval);
-                            isUpdatingFromHash = false;
-                        }, 10000);
+                        clearInterval(checkDataInterval);
+                        executeUserSearchFromHash(trimmedUserId);
                     }
-                }
+                }, 100);
+                
+                // 10秒でタイムアウト
+                setTimeout(() => {
+                    clearInterval(checkDataInterval);
+                    isUpdatingFromHash = false;
+                }, 10000);
             }
         }
+    }
+    // #keyword=で始まるハッシュをチェック
+    else if (hash.startsWith('#keyword=')) {
+        let keyword = hash.substring(9); // '#keyword='の9文字を除去
+        
+        // ?や&以降のパラメータを除去
+        const parameterIndex = Math.min(
+            keyword.indexOf('?') !== -1 ? keyword.indexOf('?') : keyword.length,
+            keyword.indexOf('&') !== -1 ? keyword.indexOf('&') : keyword.length
+        );
+        keyword = keyword.substring(0, parameterIndex);
+        
+        // URLデコード
+        keyword = decodeURIComponent(keyword);
+        
+        if (keyword && keyword.trim()) {
+            const trimmedKeyword = keyword.trim();
+            console.log('URLハッシュからキーワードを検出:', trimmedKeyword);
+            
+            // フラグを設定してハッシュ更新による処理であることを示す
+            isUpdatingFromHash = true;
+            
+            // 入力フォームにキーワードを設定
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = trimmedKeyword;
+                
+                // 視覚的フィードバック
+                searchInput.focus();
+                searchInput.select();
+            }
+            
+            // データが読み込まれている場合は即座に検索実行
+            if (currentData && currentData.keyword_dict) {
+                executeKeywordSearchFromHash(trimmedKeyword);
+            } else {
+                // データ読み込み完了まで待機してから検索実行
+                const checkDataInterval = setInterval(() => {
+                    if (currentData && currentData.keyword_dict) {
+                        clearInterval(checkDataInterval);
+                        executeKeywordSearchFromHash(trimmedKeyword);
+                    }
+                }, 100);
+                
+                // 10秒でタイムアウト
+                setTimeout(() => {
+                    clearInterval(checkDataInterval);
+                    isUpdatingFromHash = false;
+                }, 10000);
+            }
+        }
+    }
+}
 
         // ハッシュからの検索実行（ハッシュ更新なし）
         function executeKeywordSearchFromHash(keyword) {
@@ -799,6 +858,7 @@
             }
 
             currentKeyword = keyword;
+            currentUserId = ''; // ユーザー検索の状態をクリア
             showLoading();
             
             setTimeout(() => {
@@ -854,7 +914,7 @@
                     
                     // URLハッシュにキーワードがない場合は最新投稿を表示
                     const hash = window.location.hash;
-                    if (!hash.startsWith('#keyword=')) {
+                    if (!hash.startsWith('#keyword=') && !hash.startsWith('#user=')) {
                         setTimeout(displayInitialContent, 500);
                     }
                 }
@@ -873,68 +933,15 @@
         enhancedInitialization();
 
 
-// ユーザー検索機能の実装
-function handleHashUser() {
-    if (isUpdatingFromHash) return; // 無限ループ防止
-    
-    const hash = window.location.hash;
-    
-    // #user=で始まるハッシュをチェック
-    if (hash.startsWith('#user=')) {
-        let userId = hash.substring(6); // '#user='の6文字を除去
-        
-        // ?や&以降のパラメータを除去
-        const parameterIndex = Math.min(
-            userId.indexOf('?') !== -1 ? userId.indexOf('?') : userId.length,
-            userId.indexOf('&') !== -1 ? userId.indexOf('&') : userId.length
-        );
-        userId = userId.substring(0, parameterIndex);
-        
-        // URLデコード
-        userId = decodeURIComponent(userId);
-        
-        if (userId && userId.trim()) {
-            const trimmedUserId = userId.trim();
-            console.log('URLハッシュからユーザーIDを検出:', trimmedUserId);
-            
-            // フラグを設定してハッシュ更新による処理であることを示す
-            isUpdatingFromHash = true;
-            
-            // 検索入力フォームをクリア
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = '';
-            }
-            
-            // データが読み込まれている場合は即座にユーザー検索実行
-            if (currentData && currentData.keyword_dict) {
-                executeUserSearchFromHash(trimmedUserId);
-            } else {
-                // データ読み込み完了まで待機してからユーザー検索実行
-                const checkDataInterval = setInterval(() => {
-                    if (currentData && currentData.keyword_dict) {
-                        clearInterval(checkDataInterval);
-                        executeUserSearchFromHash(trimmedUserId);
-                    }
-                }, 100);
-                
-                // 10秒でタイムアウト
-                setTimeout(() => {
-                    clearInterval(checkDataInterval);
-                    isUpdatingFromHash = false;
-                }, 10000);
-            }
-        }
-    }
-}
-
 // ユーザー検索を実行する関数（ハッシュ更新なし）
 function executeUserSearchFromHash(userId) {
     if (!currentData || !currentData.keyword_dict) {
         isUpdatingFromHash = false;
         return;
     }
-
+    currentKeyword = ''; // キーワード検索の状態をクリア
+    currentUserId = userId; // ユーザー検索の状態を設定
+        
     showLoading();
     
     setTimeout(() => {
@@ -1051,26 +1058,6 @@ function displayUserResults(results, userId) {
     }
 }
 
-// 既存のhandleHashKeyword関数を更新してユーザー検索も処理できるように
-const originalHandleHashKeyword = handleHashKeyword;
-handleHashKeyword = function() {
-    const hash = window.location.hash;
-    if (hash.startsWith('#user=')) {
-        handleHashUser();
-    } else {
-        originalHandleHashKeyword();
-    }
-};
-
-// イベントリスナーにユーザー検索も追加
-window.addEventListener('hashchange', function() {
-    const hash = window.location.hash;
-    if (hash.startsWith('#user=')) {
-        handleHashUser();
-    } else {
-        handleHashKeyword();
-    }
-});
 
 
 
