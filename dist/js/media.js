@@ -995,12 +995,22 @@ function displayUserResults(results, userId) {
     const noResults = document.getElementById('noResults');
     const resultsInfoH2 = document.querySelector('#resultsInfo h2');
     
+    // userIdに対応するnicknameを取得
+    let nickname = userId; // デフォルトはuserIdを使用
+    if (currentData && currentData.nickname_dict && results.length > 0) {
+        // 検索結果の最初のfile_pathからnicknameを取得
+        const firstFilePath = results[0].file_path;
+        if (currentData.nickname_dict[firstFilePath] && currentData.nickname_dict[firstFilePath].nickname) {
+            nickname = currentData.nickname_dict[firstFilePath].nickname;
+        }
+    }
+    
     // h2のテキストを変更
     if (resultsInfoH2) {
         resultsInfoH2.textContent = 'ユーザー検索結果';
     }
     
-    resultsCount.textContent = `ユーザー "${userId}" の投稿: ${results.length}件`;
+    resultsCount.textContent = `"${nickname}" の投稿: ${results.length}件`;
     
     if (results.length === 0) {
         resultsGrid.innerHTML = '';
