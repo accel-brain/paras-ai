@@ -151,7 +151,8 @@ function convertUserInfoNicknames() {
         const text = element.textContent || element.innerText;
         
         // "by {nickname} {datetime}"の形式をチェック
-        const byPattern = /^by\s+(\S+)\s+(.+)$/;
+        // datetimeフォーマット: yy/mm/dd HH:MM:SS または yyyy/mm/dd HH:MM:SS
+        const byPattern = /^by\s+(.+?)\s+(\d{2,4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}:\d{2})$/;
         const match = text.match(byPattern);
         
         if (match) {
