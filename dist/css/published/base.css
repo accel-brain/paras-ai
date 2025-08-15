@@ -440,7 +440,6 @@ ul li.show-icon .copy-icon {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(225, 229, 233, 0.8);
     border-radius: 15px;
-    padding: 20px;
     margin: 20px 0;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
