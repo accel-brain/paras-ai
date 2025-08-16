@@ -1529,3 +1529,9 @@ async function displayUserResults(results, userId) {
         hidePagination();
     }
 }
+
+// グローバル関数として登録
+window.searchByTagCloud = searchByTagCloud;
+window.searchByKeywordTag = searchByKeywordTag;
+window.goToNextPage = goToNextPage;
+window.goToPreviousPage = goToPreviousPage;
