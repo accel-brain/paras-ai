@@ -1242,7 +1242,7 @@ async function loadKeywordData() {
 }
 
 // アプリケーション初期化
-async function initializeApp() {
+async function initializeMedia() {
     console.log('アプリケーションを初期化中...');
     
     // ステータス更新
@@ -1262,7 +1262,7 @@ async function initializeApp() {
 
 // ページ読み込み時に初期化
 document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
+    initializeMedia();
 });
 
 // グローバルエラーハンドラ
@@ -1410,7 +1410,7 @@ function displayInitialContent() {
     displayRecentPosts();
 }
 
-// 既存のinitializeApp関数の後に実行される初期化処理
+// 既存のinitializeMedia関数の後に実行される初期化処理
 function enhancedInitialization() {
     // データ読み込み完了をチェック
     const checkDataAndDisplay = setInterval(() => {
