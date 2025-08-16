@@ -1535,3 +1535,181 @@ window.searchByTagCloud = searchByTagCloud;
 window.searchByKeywordTag = searchByKeywordTag;
 window.goToNextPage = goToNextPage;
 window.goToPreviousPage = goToPreviousPage;
+
+
+
+import { enableIndexedDbPersistence, clearIndexedDbPersistence, terminate, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// シンプルなキャッシュ管理クラス
+class FirestoreDataManager {
+  constructor() {
+    this.lastUpdate = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5分
+    this.isInitialized = false;
+  }
+  
+  // Firebase内蔵キャッシュを有効化
+  async initializeCache() {
+    if (this.isInitialized) return;
+    
+    try {
+      await enableIndexedDbPersistence(db);
+      console.log('Firebaseオフラインキャッシュが有効になりました');
+      this.isInitialized = true;
+    } catch (err) {
+      if (err.code === 'failed-precondition') {
+        console.warn('複数タブで開かれているためキャッシュが無効です');
+      } else if (err.code === 'unimplemented') {
+        console.warn('ブラウザがオフラインキャッシュに対応していません');
+      }
+    }
+  }
+  
+  // データ更新を記録
+  markDataUpdated(dataType) {
+    this.lastUpdate.set(dataType, Date.now());
+  }
+  
+  // キャッシュが古いかチェック
+  isCacheStale(dataType) {
+    const lastUpdate = this.lastUpdate.get(dataType);
+    if (!lastUpdate) return false;
+    return Date.now() - lastUpdate > this.cacheTimeout;
+  }
+  
+  // 全キャッシュをクリア
+  async clearAllCache() {
+    try {
+      await terminate(db);
+      await clearIndexedDbPersistence(db);
+      await this.initializeCache();
+      this.lastUpdate.clear();
+      console.log('全キャッシュがクリアされました');
+      return true;
+    } catch (error) {
+      console.error('キャッシュクリアエラー:', error);
+      return false;
+    }
+  }
+}
+
+// グローバルキャッシュマネージャーインスタンス
+const cacheManager = new FirestoreDataManager();
+
+// 既存関数を拡張（元の関数はそのまま残す）
+const originalGetKeywordWeights = getKeywordWeights;
+const originalGetSortedPages = getSortedPages;
+
+// キャッシュ対応版の関数群
+async function getKeywordWeightsWithCache(forceRefresh = false) {
+  if (forceRefresh || cacheManager.isCacheStale('keywords')) {
+    try {
+      const q = query(
+        collection(db, 'public_html'),
+        where('type', '==', 'keyword')
+      );
+      
+      const snapshot = await getDocsFromServer(q);
+      
+      const keywordWeights = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const keyword = data.keyword;
+        const items = data.files || [];
+        const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+        
+        if (totalWeight > 0) {
+          keywordWeights.push({ keyword, totalWeight });
+        }
+      });
+      
+      return keywordWeights;
+    } catch (error) {
+      console.warn('サーバー取得失敗、キャッシュ版を使用:', error);
+      return await originalGetKeywordWeights();
+    }
+  }
+  
+  return await originalGetKeywordWeights();
+}
+
+async function getSortedPagesWithCache(forceRefresh = false) {
+  if (forceRefresh || cacheManager.isCacheStale('sortedPages')) {
+    try {
+      const q = query(
+        collection(db, 'public_html'),
+        where('type', '==', 'sort'),
+        orderBy('publish_timestamp', 'desc')
+      );
+      
+      const snapshot = await getDocsFromServer(q);
+      
+      const sortedPages = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        sortedPages.push({
+          file_path: data.file_path,
+          publish_timestamp: data.publish_timestamp,
+          publish_datetime: data.publish_datetime
+        });
+      });
+      
+      return sortedPages;
+    } catch (error) {
+      console.warn('サーバー取得失敗、キャッシュ版を使用:', error);
+      return await originalGetSortedPages();
+    }
+  }
+  
+  return await originalGetSortedPages();
+}
+
+// 自動初期化
+async function initializeCacheSystem() {
+  await cacheManager.initializeCache();
+  
+  // 定期的なキャッシュチェック（5分ごと）
+  setInterval(() => {
+    if (cacheManager.isCacheStale('keywords')) {
+      cacheManager.markDataUpdated('keywords');
+    }
+    if (cacheManager.isCacheStale('sortedPages')) {
+      cacheManager.markDataUpdated('sortedPages');
+    }
+  }, 5 * 60 * 1000);
+}
+
+// 既存のinitializeApp関数を拡張
+const originalInitializeApp = initializeApp;
+window.initializeApp = async function() {
+  await originalInitializeApp();
+  await initializeCacheSystem();
+};
+
+// 必要な関数をグローバルに公開
+window.cacheManager = cacheManager;
+window.getKeywordWeightsWithCache = getKeywordWeightsWithCache;
+window.getSortedPagesWithCache = getSortedPagesWithCache;
+
+// キャッシュリフレッシュ用のグローバル関数
+window.refreshAllData = async function() {
+  cacheManager.markDataUpdated('keywords');
+  cacheManager.markDataUpdated('sortedPages');
+  
+  // タグクラウド更新
+  try {
+    const keywordWeights = await getKeywordWeightsWithCache(true);
+    const sortedKeywords = calculateKeywordWeights(keywordWeights);
+    generateTagCloud(sortedKeywords);
+  } catch (error) {
+    console.error('タグクラウド更新エラー:', error);
+  }
+  
+  // 現在の表示を更新
+  if (isSearchMode && currentKeyword) {
+    await executeKeywordSearch(currentKeyword);
+  } else {
+    await displayRecentPosts();
+  }
+};
+
