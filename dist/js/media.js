@@ -1,3 +1,703 @@
+// Firebase初期化（事前実行）
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDpiNeyrFVTuvIWIo7ZgpmdEZSytGfEzMY",
+  authDomain: "paras-api-service.firebaseapp.com",
+  projectId: "paras-api-service",
+  storageBucket: "paras-api-service.firebasestorage.app",
+  messagingSenderId: "298398863456",
+  appId: "1:298398863456:web:08f31fa500a9e137f17305",
+  measurementId: "G-0MVTPPPY5N"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Firestore から keyword タイプのドキュメントを取得して処理
+async function getKeywordWeights() {
+    try {
+        const keywordWeights = [];
+        
+        // keyword タイプのドキュメントを全て取得
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'keyword')
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const keyword = data.keyword;
+            const items = data.files || [];
+            
+            // 総重みを計算
+            const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+            
+            // weightが0より多い要素のみを対象とする
+            if (totalWeight > 0) {
+                keywordWeights.push({ keyword, totalWeight });
+            }
+        });
+        
+        return keywordWeights;
+        
+    } catch (error) {
+        console.error('キーワード重み取得エラー:', error);
+        return [];
+    }
+}
+
+async function searchKeywordsHybrid(filteredSearchTerms) {
+    try {
+        const results = [];
+        
+        // Step 1: 完全一致で高速取得
+        const exactMatches = filteredSearchTerms.map(searchTerm => 
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'keyword'),
+                where('keyword', '==', searchTerm)
+            ))
+        );
+        
+        const exactSnapshots = await Promise.all(exactMatches);
+        const foundKeywords = new Set();
+        
+        exactSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                results.push(...(data.files || []));
+                foundKeywords.add(data.keyword);
+                console.log(`完全一致: ${data.keyword}`);
+            });
+        });
+        
+        // Step 2: 完全一致しなかった検索語のみ部分一致検索
+        const remainingTerms = filteredSearchTerms.filter(term => !foundKeywords.has(term));
+        
+        if (remainingTerms.length > 0) {
+            // 部分一致は全keyword取得が必要
+            const q = query(
+                collection(db, 'public_html'),
+                where('type', '==', 'keyword')
+            );
+            
+            const snapshot = await getDocs(q);
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const dictKeyword = data.keyword;
+                
+                // 既に完全一致で処理済みはスキップ
+                if (foundKeywords.has(dictKeyword)) return;
+                
+                const dictKeywords = extractKeywords(dictKeyword);
+                const dictTerms = new Set();
+                dictKeywords.forEach(kw => {
+                    if (kw.surface) dictTerms.add(kw.surface);
+                });
+                dictTerms.add(dictKeyword);
+                
+                const hasMatch = remainingTerms.some(searchTerm =>
+                    Array.from(dictTerms).some(dictTerm =>
+                        dictTerm.includes(searchTerm) ||
+                        searchTerm.includes(dictTerm)
+                    )
+                );
+                
+                if (hasMatch) {
+                    results.push(...(data.files || []));
+                    console.log(`部分一致: ${dictKeyword}`);
+                }
+            });
+        }
+        
+        return results;
+        
+    } catch (error) {
+        console.error('キーワード検索エラー:', error);
+        return [];
+    }
+}
+
+async function searchPageTitles(filteredSearchTerms) {
+    try {
+        const results = [];
+        
+        // Step 1: 完全一致でタイトル検索（並列処理）
+        const exactMatches = filteredSearchTerms.map(searchTerm => 
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'page_title'),
+                where('title', '==', searchTerm)
+            ))
+        );
+        
+        const exactSnapshots = await Promise.all(exactMatches);
+        const foundTitles = new Set();
+        
+        // 完全一致したタイトルを処理
+        for (const snapshot of exactSnapshots) {
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                const filePath = data.file_path;
+                const title = data.title;
+                
+                if (!title) continue;
+                
+                foundTitles.add(title);
+                
+                // 該当ファイルの最大重みを取得
+                const maxWeight = await getMaxWeightForFile(filePath);
+                
+                if (maxWeight > 0) {
+                    results.push({ file_path: filePath, weight: maxWeight });
+                    console.log(`タイトル完全一致: ${title}`);
+                }
+            }
+        }
+        
+        // Step 2: 部分一致検索（完全一致しなかった検索語のみ）
+        const remainingTerms = filteredSearchTerms.filter(term => !foundTitles.has(term));
+        
+        if (remainingTerms.length > 0) {
+            // page_title タイプの全ドキュメントを取得
+            const q = query(
+                collection(db, 'public_html'),
+                where('type', '==', 'page_title')
+            );
+            
+            const snapshot = await getDocs(q);
+            
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                const filePath = data.file_path;
+                const title = data.title;
+                
+                if (!title || foundTitles.has(title)) continue;
+                
+                const titleKeywords = extractKeywords(title);
+                const titleTerms = new Set();
+                titleKeywords.forEach(kw => {
+                    if (kw.surface) titleTerms.add(kw.surface);
+                });
+                titleTerms.add(title);
+                
+                const hasTitleMatch = remainingTerms.some(searchTerm =>
+                    Array.from(titleTerms).some(titleTerm =>
+                        titleTerm.includes(searchTerm) ||
+                        searchTerm.includes(titleTerm)
+                    )
+                );
+                
+                if (hasTitleMatch) {
+                    // 該当ファイルの最大重みを取得
+                    const maxWeight = await getMaxWeightForFile(filePath);
+                    
+                    if (maxWeight > 0) {
+                        results.push({ file_path: filePath, weight: maxWeight });
+                        console.log(`タイトル部分一致: ${title}`);
+                    }
+                }
+            }
+        }
+        
+        return results;
+        
+    } catch (error) {
+        console.error('ページタイトル検索エラー:', error);
+        return [];
+    }
+}
+
+// 指定ファイルパスの最大重みを取得するヘルパー関数
+async function getMaxWeightForFile(filePath) {
+    try {
+        let maxWeight = 0;
+        
+        // keyword タイプの全ドキュメントから該当ファイルを検索
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'keyword')
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const items = data.files || [];
+            const item = items.find(item => item.file_path === filePath);
+            
+            if (item && item.weight > maxWeight) {
+                maxWeight = item.weight;
+            }
+        });
+        
+        return maxWeight;
+        
+    } catch (error) {
+        console.error('最大重み取得エラー:', error);
+        return 0;
+    }
+}
+
+async function getSortedPages() {
+    try {
+        // sort タイプのドキュメントを全て取得
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'sort'),
+            orderBy('publish_timestamp', 'desc') // Firestoreで直接ソート（降順・最新順）
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        const sortedPages = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            sortedPages.push({
+                file_path: data.file_path,
+                publish_timestamp: data.publish_timestamp,
+                publish_datetime: data.publish_datetime
+            });
+        });
+        
+        return sortedPages;
+        
+    } catch (error) {
+        console.error('ソート済みページ取得エラー:', error);
+        return [];
+    }
+}
+
+// ニックネームと投稿日時情報を取得する共通関数
+async function getAuthorInfo(filePath) {
+    try {
+        let authorInfo = '';
+        
+        // ニックネーム情報と日時情報を並列取得
+        const [nicknameQuery, sortQuery] = await Promise.all([
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'nickname'),
+                where('file_path', '==', filePath),
+                limit(1)
+            )),
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'sort'),
+                where('file_path', '==', filePath),
+                limit(1)
+            ))
+        ]);
+        
+        // ニックネーム情報を取得
+        let nickname = null;
+        if (!nicknameQuery.empty) {
+            const nicknameData = nicknameQuery.docs[0].data();
+            nickname = nicknameData.nickname || '匿名';
+        }
+        
+        // 投稿日時情報を取得
+        let publishDate = '';
+        if (!sortQuery.empty) {
+            const sortData = sortQuery.docs[0].data();
+            if (sortData.publish_datetime) {
+                publishDate = new Date(sortData.publish_datetime).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+        
+        // 結果の組み立て
+        if (nickname && publishDate) {
+            authorInfo = `by ${nickname} ${publishDate}`;
+        } else if (nickname) {
+            authorInfo = `by ${nickname}`;
+        } else if (publishDate) {
+            authorInfo = publishDate;
+        }
+        
+        return authorInfo;
+        
+    } catch (error) {
+        console.error('著者情報取得エラー:', error);
+        return '';
+    }
+}
+
+// パフォーマンス向上のためのバッチ版（複数ファイルパスを一度に処理）
+async function getAuthorInfoBatch(filePaths) {
+    try {
+        const authorInfoMap = new Map();
+        
+        if (filePaths.length === 0) return authorInfoMap;
+        
+        // ニックネーム情報をバッチ取得
+        const nicknameQuery = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'nickname'),
+            where('file_path', 'in', filePaths.slice(0, 10)) // Firestoreの制限: 10個まで
+        );
+        
+        // 投稿日時情報をバッチ取得
+        const sortQuery = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'sort'),
+            where('file_path', 'in', filePaths.slice(0, 10))
+        );
+        
+        const [nicknameSnapshot, sortSnapshot] = await Promise.all([
+            getDocs(nicknameQuery),
+            getDocs(sortQuery)
+        ]);
+        
+        // ニックネーム情報をマップに格納
+        const nicknameMap = new Map();
+        nicknameSnapshot.forEach(doc => {
+            const data = doc.data();
+            nicknameMap.set(data.file_path, data.nickname || '匿名');
+        });
+        
+        // 投稿日時情報をマップに格納
+        const sortMap = new Map();
+        sortSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.publish_datetime) {
+                const publishDate = new Date(data.publish_datetime).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                sortMap.set(data.file_path, publishDate);
+            }
+        });
+        
+        // 結果を組み立て
+        filePaths.slice(0, 10).forEach(filePath => {
+            const nickname = nicknameMap.get(filePath);
+            const publishDate = sortMap.get(filePath);
+            
+            let authorInfo = '';
+            if (nickname && publishDate) {
+                authorInfo = `by ${nickname} ${publishDate}`;
+            } else if (nickname) {
+                authorInfo = `by ${nickname}`;
+            } else if (publishDate) {
+                authorInfo = publishDate;
+            }
+            
+            authorInfoMap.set(filePath, authorInfo);
+        });
+        
+        return authorInfoMap;
+        
+    } catch (error) {
+        console.error('著者情報バッチ取得エラー:', error);
+        return new Map();
+    }
+}
+
+// 単一ファイルパスからページタイトルを取得
+async function getPageTitle(filePath) {
+    try {
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'page_title'),
+            where('file_path', '==', filePath),
+            limit(1)
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            return data.title || null;
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('ページタイトル取得エラー:', error);
+        return null;
+    }
+}
+
+// 複数ファイルパスからページタイトルをバッチ取得（効率的）
+async function getPageTitlesBatch(filePaths) {
+    try {
+        const titleMap = new Map();
+        
+        if (filePaths.length === 0) return titleMap;
+        
+        // Firestoreの制限: 'in'クエリは10個まで
+        const batches = [];
+        for (let i = 0; i < filePaths.length; i += 10) {
+            batches.push(filePaths.slice(i, i + 10));
+        }
+        
+        // 各バッチを並列処理
+        const batchPromises = batches.map(batch => 
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'page_title'),
+                where('file_path', 'in', batch)
+            ))
+        );
+        
+        const snapshots = await Promise.all(batchPromises);
+        
+        // 結果をマップに格納
+        snapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                titleMap.set(data.file_path, data.title || null);
+            });
+        });
+        
+        return titleMap;
+        
+    } catch (error) {
+        console.error('ページタイトルバッチ取得エラー:', error);
+        return new Map();
+    }
+}
+
+// file_pathに紐づく上位5つのキーワードを取得
+async function getTopKeywordsForPath(filePath) {
+    try {
+        const keywords = [];
+        
+        // keyword タイプの全ドキュメントを取得
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'keyword')
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const keyword = data.keyword;
+            const items = data.files || [];
+            
+            // 指定されたfile_pathと一致するアイテムを検索
+            const item = items.find(item => item.file_path === filePath);
+            if (item) {
+                keywords.push({ keyword: keyword, weight: item.weight });
+            }
+        });
+        
+        // 重み順でソートし、上位5つのキーワードのみを返す
+        return keywords
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 5)
+            .map(item => item.keyword);
+        
+    } catch (error) {
+        console.error('トップキーワード取得エラー:', error);
+        return [];
+    }
+}
+
+// 複数ファイルパスに対応したバッチ版（効率的）
+async function getTopKeywordsForPathsBatch(filePaths) {
+    try {
+        const resultMap = new Map();
+        
+        if (filePaths.length === 0) return resultMap;
+        
+        // 各ファイルパスのキーワードを格納
+        filePaths.forEach(path => {
+            resultMap.set(path, []);
+        });
+        
+        // keyword タイプの全ドキュメントを取得
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'keyword')
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const keyword = data.keyword;
+            const items = data.files || [];
+            
+            // 各指定ファイルパスに該当するアイテムをチェック
+            filePaths.forEach(filePath => {
+                const item = items.find(item => item.file_path === filePath);
+                if (item) {
+                    const keywords = resultMap.get(filePath);
+                    keywords.push({ keyword: keyword, weight: item.weight });
+                }
+            });
+        });
+        
+        // 各ファイルパスごとに重み順ソートし、上位5つを取得
+        resultMap.forEach((keywords, filePath) => {
+            const topKeywords = keywords
+                .sort((a, b) => b.weight - a.weight)
+                .slice(0, 5)
+                .map(item => item.keyword);
+            resultMap.set(filePath, topKeywords);
+        });
+        
+        return resultMap;
+        
+    } catch (error) {
+        console.error('トップキーワードバッチ取得エラー:', error);
+        return new Map();
+    }
+}
+
+async function getUserFilesOptimized(userId) {
+    try {
+        const results = [];
+        const filePathWeightMap = new Map();
+        
+        // file_pathのプレフィックスを作成
+        const pathPrefix = `logs/${userId}/`;
+        const pathPrefixEnd = `logs/${userId}/\uf8ff`; // Unicode終端文字
+        
+        // より効率的なクエリ：file_pathでrange検索
+        // 注意：これは sort タイプのドキュメントから該当ファイルを見つける方法
+        const sortQuery = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'sort'),
+            where('file_path', '>=', pathPrefix),
+            where('file_path', '<', pathPrefixEnd)
+        );
+        
+        const sortSnapshot = await getDocs(sortQuery);
+        const userFilePaths = [];
+        
+        sortSnapshot.forEach(doc => {
+            const data = doc.data();
+            userFilePaths.push(data.file_path);
+        });
+        
+        if (userFilePaths.length === 0) {
+            return results;
+        }
+        
+        // 該当ファイルパスのキーワードを取得
+        const keywordQuery = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'keyword')
+        );
+        
+        const keywordSnapshot = await getDocs(keywordQuery);
+        
+        keywordSnapshot.forEach(doc => {
+            const data = doc.data();
+            const items = data.files || [];
+            
+            items.forEach(item => {
+                if (userFilePaths.includes(item.file_path)) {
+                    // 重複チェック：最大weightを保持
+                    const existingWeight = filePathWeightMap.get(item.file_path);
+                    if (!existingWeight || existingWeight < item.weight) {
+                        filePathWeightMap.set(item.file_path, item.weight);
+                        
+                        const existingIndex = results.findIndex(r => r.file_path === item.file_path);
+                        if (existingIndex !== -1) {
+                            results[existingIndex] = item;
+                        } else {
+                            results.push(item);
+                        }
+                    }
+                }
+            });
+        });
+        
+        return results;
+        
+    } catch (error) {
+        console.error('最適化ユーザーファイル取得エラー:', error);
+        return [];
+    }
+}
+
+// file_pathに紐づくニックネームを取得
+async function getNicknameByFilePath(filePath) {
+    try {
+        const q = query(
+            collection(db, 'public_html'),
+            where('type', '==', 'nickname'),
+            where('file_path', '==', filePath),
+            limit(1)
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            return data.nickname || null;
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('ニックネーム取得エラー:', error);
+        return null;
+    }
+}
+
+// 複数ファイルパスからニックネームをバッチ取得（効率的）
+async function getNicknamesByFilePathsBatch(filePaths) {
+    try {
+        const nicknameMap = new Map();
+        
+        if (filePaths.length === 0) return nicknameMap;
+        
+        // Firestoreの制限: 'in'クエリは10個まで
+        const batches = [];
+        for (let i = 0; i < filePaths.length; i += 10) {
+            batches.push(filePaths.slice(i, i + 10));
+        }
+        
+        // 各バッチを並列処理
+        const batchPromises = batches.map(batch => 
+            getDocs(query(
+                collection(db, 'public_html'),
+                where('type', '==', 'nickname'),
+                where('file_path', 'in', batch)
+            ))
+        );
+        
+        const snapshots = await Promise.all(batchPromises);
+        
+        // 結果をマップに格納
+        snapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                nicknameMap.set(data.file_path, data.nickname || null);
+            });
+        });
+        
+        return nicknameMap;
+        
+    } catch (error) {
+        console.error('ニックネームバッチ取得エラー:', error);
+        return new Map();
+    }
+}
+
+
+
+
         // グローバル変数
         let currentData = null;
         let currentKeyword = '';
@@ -136,46 +836,14 @@
             return tokenizer.extractKeywords(text, minLength);
         }
 
-        // 重み付きランダムサンプリングでキーワードを選択
-        function getWeightedRandomKeyword() {
-            const keywordWeights = calculateKeywordWeights();
-            const totalWeight = keywordWeights.reduce((sum, item) => sum + item.totalWeight, 0);
-            
-            let random = Math.random() * totalWeight;
-            
-            for (const item of keywordWeights) {
-                random -= item.totalWeight;
-                if (random <= 0) {
-                    return item.keyword;
-                }
-            }
-            
-            return keywordWeights[0]?.keyword || Object.keys(currentData.keyword_dict)[0];
-        }
-
         // キーワードの総重みを計算（weightが0より多い要素のみ）
         function calculateKeywordWeights() {
-            const keywordWeights = [];
-            
-            Object.keys(currentData.keyword_dict).forEach(keyword => {
-                const items = currentData.keyword_dict[keyword];
-                const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-                
-                // weightが0より多い要素のみを対象とする
-                if (totalWeight > 0) {
-                    keywordWeights.push({ keyword, totalWeight });
-                }
-            });
-            
+            const keywordWeights = await getKeywordWeights();
             return keywordWeights.sort((a, b) => b.totalWeight - a.totalWeight);
         }
 
         // タグクラウドを生成（最大10個まで）
         function generateTagCloud() {
-            if (!currentData || !currentData.keyword_dict) {
-                return;
-            }
-            
             const tagCloudContainer = document.getElementById('tagCloud');
             const keywordWeights = calculateKeywordWeights();
             
@@ -219,11 +887,6 @@
 
         // 検索実行（URLハッシュ更新付き）
         function performSearch() {
-            if (!currentData || !currentData.keyword_dict) {
-                alert('データがまだ読み込まれていません。しばらくお待ちください。');
-                return;
-            }
-
             const searchInput = document.getElementById('searchInput');
             const keyword = searchInput.value.trim();
 
@@ -272,73 +935,21 @@
             );
             
             console.log('検索語:', filteredSearchTerms);
-            
-            // 1. キーワード辞書での検索
-            Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
-                const dictKeywords = extractKeywords(dictKeyword);
-                const dictTerms = new Set();
-                dictKeywords.forEach(kw => {
-                    if (kw.surface) dictTerms.add(kw.surface);
-                });
-                dictTerms.add(dictKeyword);
-                
-                const hasMatch = filteredSearchTerms.some(searchTerm =>
-                    Array.from(dictTerms).some(dictTerm =>
-                        searchTerm === dictTerm ||
-                        dictTerm.includes(searchTerm) ||
-                        searchTerm.includes(dictTerm)
-                    )
-                );
-                
-                if (hasMatch) {
-                    results.push(...currentData.keyword_dict[dictKeyword]);
-                    console.log(`マッチしたキーワード: ${dictKeyword}`);
-                }
-            });
 
-            // 2. ページタイトルでの検索
-            if (currentData.page_title_dict) {
-                Object.keys(currentData.page_title_dict).forEach(filePath => {
-                    const title = currentData.page_title_dict[filePath];
-                    if (!title) return;
-                    const titleKeywords = extractKeywords(title);
-                    const titleTerms = new Set();
-                    titleKeywords.forEach(kw => {
-                        if (kw.surface) titleTerms.add(kw.surface);
-                    });
-                    titleTerms.add(title);
-                    
-                    const hasTitleMatch = filteredSearchTerms.some(searchTerm =>
-                        Array.from(titleTerms).some(titleTerm =>
-                            searchTerm === titleTerm ||
-                            titleTerm.includes(searchTerm) ||
-                            searchTerm.includes(titleTerm)
-                        )
-                    );
-                    
-                    if (hasTitleMatch) {
-                        let maxWeight = 0;
-                        Object.keys(currentData.keyword_dict).forEach(dictKeyword => {
-                            const items = currentData.keyword_dict[dictKeyword];
-                            const item = items.find(item => item.file_path === filePath);
-                            if (item && item.weight > maxWeight) {
-                                maxWeight = item.weight;
-                            }
-                        });
-                        
-                        if (maxWeight > 0) {
-                            results.push({ file_path: filePath, weight: maxWeight });
-                            console.log(`タイトルマッチ: ${title}`);
-                        }
-                    }
-                });
-            }
+            const searchKeywordResults = await searchKeywordsHybrid(filteredSearchTerms);
+            const searchTitleResults = await searchPageTitles(filteredSearchTerms);
 
             // 重複除去とweight順ソート
             const uniqueResults = [];
             const seenPaths = new Set();
             
-            results.forEach(result => {
+            searchKeywordResults.forEach(result => {
+                if (!seenPaths.has(result.file_path)) {
+                    seenPaths.add(result.file_path);
+                    uniqueResults.push(result);
+                }
+            });
+            searchTitleResults.forEach(result => {
                 if (!seenPaths.has(result.file_path)) {
                     seenPaths.add(result.file_path);
                     uniqueResults.push(result);
@@ -378,7 +989,7 @@
             const currentPageResults = results.slice(startIndex, endIndex);
             
             resultsGrid.innerHTML = currentPageResults.map(result => {
-                const title = currentData.page_title_dict[result.file_path] || "無題";
+                const title = await getPageTitle(result.file_path);
                 const topKeywords = getTopKeywordsForPath(result.file_path);
                 const authorInfo = getAuthorInfo(result.file_path);
                 
@@ -403,67 +1014,13 @@
 
         // 最新投稿順でページを取得する関数
         function getRecentPages() {
-            if (!currentData || !currentData.sort_dict) {
-                return [];
-            }
-            
             // sort_dictからタイムスタンプ順でソート
-            const sortedPages = Object.keys(currentData.sort_dict)
-                .map(filePath => ({
-                    file_path: filePath,
-                    publish_timestamp: currentData.sort_dict[filePath].publish_timestamp,
-                    publish_datetime: currentData.sort_dict[filePath].publish_datetime
-                }))
-                .sort((a, b) => b.publish_timestamp - a.publish_timestamp); // 降順（最新順）
-            
+            const sortedPages = await getSortedPages();        
             return sortedPages;
         }
 
-        // ニックネームと投稿日時情報を取得する共通関数
-        function getAuthorInfo(filePath) {
-            let authorInfo = '';
-            
-            if (currentData.nickname_dict && currentData.nickname_dict[filePath]) {
-                const nickname = currentData.nickname_dict[filePath].nickname || '匿名';
-                
-                // sort_dictから投稿日時を取得
-                let publishDate = '';
-                if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
-                    publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
-                
-                if (publishDate) {
-                    authorInfo = `by ${nickname} ${publishDate}`;
-                } else {
-                    authorInfo = `by ${nickname}`;
-                }
-            } else if (currentData.sort_dict && currentData.sort_dict[filePath] && currentData.sort_dict[filePath].publish_datetime) {
-                // ニックネーム情報がない場合は投稿日時のみ
-                const publishDate = new Date(currentData.sort_dict[filePath].publish_datetime).toLocaleDateString('ja-JP', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                authorInfo = publishDate;
-            }
-            
-            return authorInfo;
-        }
-
         // ページネーション付きで最新投稿順の結果を表示する関数
-        function displayRecentPosts() {
-            if (!currentData) {
-                return;
-            }
-            
+        function displayRecentPosts() {            
             const recentPages = getRecentPages();
             currentResults = recentPages;
             isSearchMode = false;
@@ -497,7 +1054,7 @@
             const currentPageResults = recentPages.slice(startIndex, endIndex);
             
             resultsGrid.innerHTML = currentPageResults.map(page => {
-                const title = currentData.page_title_dict[page.file_path] || "無題";
+                const title = await getPageTitle(page.file_path);
                 const topKeywords = getTopKeywordsForPath(page.file_path);
                 const authorInfo = getAuthorInfo(page.file_path);
                 
@@ -586,23 +1143,8 @@
 
         // file_pathに紐づく上位5つのキーワードを取得
         function getTopKeywordsForPath(filePath) {
-            if (!currentData || !currentData.keyword_dict) {
-                return [];
-            }
-            
-            const keywords = [];
-            Object.keys(currentData.keyword_dict).forEach(keyword => {
-                const items = currentData.keyword_dict[keyword];
-                const item = items.find(item => item.file_path === filePath);
-                if (item) {
-                    keywords.push({ keyword: keyword, weight: item.weight });
-                }
-            });
-            
-            return keywords
-                .sort((a, b) => b.weight - a.weight)
-                .slice(0, 5)
-                .map(item => item.keyword);
+            const keywords = await getTopKeywordsForPathsBatch(filePath);            
+            return keywords;
         }
 
         // ローディング表示
@@ -650,11 +1192,6 @@
 
         // キーワード検索を実行する関数（URLハッシュ更新付き）
         function executeKeywordSearch(keyword) {
-            if (!currentData || !currentData.keyword_dict) {
-                alert('データがまだ読み込まれていません。しばらくお待ちください。');
-                return;
-            }
-
             // ハッシュ更新からの処理中は重複更新を避ける
             if (!isUpdatingFromHash) {
                 // URLハッシュが現在のキーワードと異なる場合のみ更新
@@ -692,27 +1229,12 @@
 
         // キーワードデータを読み込む関数
         async function loadKeywordData() {
-            const response = await fetch('data/keyword_weight.json');
-            const data = await response.json();
-            currentData = data;
-            console.log('キーワードデータを読み込みました');
+            //const response = await fetch('data/keyword_weight.json');
+            //const data = await response.json();
+            //currentData = data;
+            //console.log('キーワードデータを読み込みました');
             
             generateTagCloud();
-            updateResultsCount();
-        }
-
-        // 結果カウント表示を更新
-        function updateResultsCount() {
-            const resultsCount = document.getElementById('resultsCount');
-            if (currentData && currentData.keyword_dict) {
-                const totalItems = Object.values(currentData.keyword_dict).reduce((sum, items) => sum + items.length, 0);
-                const uniquePaths = new Set();
-                Object.values(currentData.keyword_dict).forEach(items => {
-                    items.forEach(item => uniquePaths.add(item.file_path));
-                });
-                
-                resultsCount.textContent = `データ準備完了 - ${Object.keys(currentData.keyword_dict).length}キーワード、${uniquePaths.size}ドキュメント (簡易検索モード)`;
-            }
         }
 
         // アプリケーション初期化
@@ -777,24 +1299,17 @@ function handleHashKeyword() {
                 searchInput.value = '';
             }
             
-            // データが読み込まれている場合は即座にユーザー検索実行
-            if (currentData && currentData.keyword_dict) {
-                executeUserSearchFromHash(trimmedUserId);
-            } else {
-                // データ読み込み完了まで待機してからユーザー検索実行
-                const checkDataInterval = setInterval(() => {
-                    if (currentData && currentData.keyword_dict) {
-                        clearInterval(checkDataInterval);
-                        executeUserSearchFromHash(trimmedUserId);
-                    }
-                }, 100);
-                
-                // 10秒でタイムアウト
-                setTimeout(() => {
+            // データ読み込み完了まで待機してからユーザー検索実行
+            const checkDataInterval = setInterval(() => {
                     clearInterval(checkDataInterval);
-                    isUpdatingFromHash = false;
-                }, 10000);
-            }
+                    executeUserSearchFromHash(trimmedUserId);
+            }, 100);
+        
+            // 10秒でタイムアウト
+            setTimeout(() => {
+                clearInterval(checkDataInterval);
+                isUpdatingFromHash = false;
+            }, 10000);
         }
     }
     // #keyword=で始まるハッシュをチェック
@@ -828,35 +1343,23 @@ function handleHashKeyword() {
                 searchInput.select();
             }
             
-            // データが読み込まれている場合は即座に検索実行
-            if (currentData && currentData.keyword_dict) {
+            // データ読み込み完了まで待機してから検索実行
+            const checkDataInterval = setInterval(() => {
+                clearInterval(checkDataInterval);
                 executeKeywordSearchFromHash(trimmedKeyword);
-            } else {
-                // データ読み込み完了まで待機してから検索実行
-                const checkDataInterval = setInterval(() => {
-                    if (currentData && currentData.keyword_dict) {
-                        clearInterval(checkDataInterval);
-                        executeKeywordSearchFromHash(trimmedKeyword);
-                    }
-                }, 100);
-                
-                // 10秒でタイムアウト
-                setTimeout(() => {
-                    clearInterval(checkDataInterval);
-                    isUpdatingFromHash = false;
-                }, 10000);
-            }
+            }, 100);
+        
+            // 10秒でタイムアウト
+            setTimeout(() => {
+                clearInterval(checkDataInterval);
+                isUpdatingFromHash = false;
+            }, 10000);
         }
     }
 }
 
         // ハッシュからの検索実行（ハッシュ更新なし）
         function executeKeywordSearchFromHash(keyword) {
-            if (!currentData || !currentData.keyword_dict) {
-                isUpdatingFromHash = false;
-                return;
-            }
-
             currentKeyword = keyword;
             currentUserId = ''; // ユーザー検索の状態をクリア
             showLoading();
@@ -900,16 +1403,13 @@ function handleHashKeyword() {
 
         // アプリケーション初期化時に最新投稿を表示する関数
         function displayInitialContent() {
-            if (currentData && currentData.sort_dict) {
-                displayRecentPosts();
-            }
+            displayRecentPosts();
         }
 
         // 既存のinitializeApp関数の後に実行される初期化処理
         function enhancedInitialization() {
             // データ読み込み完了をチェック
             const checkDataAndDisplay = setInterval(() => {
-                if (currentData && currentData.sort_dict && currentData.page_title_dict) {
                     clearInterval(checkDataAndDisplay);
                     
                     // URLハッシュにキーワードがない場合は最新投稿を表示
@@ -917,7 +1417,6 @@ function handleHashKeyword() {
                     if (!hash.startsWith('#keyword=') && !hash.startsWith('#user=')) {
                         setTimeout(displayInitialContent, 500);
                     }
-                }
             }, 100);
             
             // 10秒でタイムアウト
@@ -935,10 +1434,6 @@ function handleHashKeyword() {
 
 // ユーザー検索を実行する関数（ハッシュ更新なし）
 function executeUserSearchFromHash(userId) {
-    if (!currentData || !currentData.keyword_dict) {
-        isUpdatingFromHash = false;
-        return;
-    }
     currentKeyword = ''; // キーワード検索の状態をクリア
     currentUserId = userId; // ユーザー検索の状態を設定
         
@@ -958,37 +1453,7 @@ function executeUserSearchFromHash(userId) {
 
 // ユーザー検索関数
 function searchByUser(userId) {
-    const results = [];
-    
-    console.log('ユーザー検索:', userId);
-    
-    // keyword_dictの全てのアイテムをチェック
-    Object.keys(currentData.keyword_dict).forEach(keyword => {
-        const items = currentData.keyword_dict[keyword];
-        items.forEach(item => {
-            if (item.file_path) {
-                // file_pathからユーザーIDを抽出（logs/{userId}/ファイル名の形式）
-                const pathParts = item.file_path.split('/');
-                if (pathParts.length >= 2 && pathParts[0] === 'logs') {
-                    const fileUserId = pathParts[1];
-                    if (fileUserId === userId) {
-                        // 重複チェック
-                        const existingResult = results.find(r => r.file_path === item.file_path);
-                        if (!existingResult || existingResult.weight < item.weight) {
-                            // 重複がない場合は追加、重複がある場合はweightの高い方を保持
-                            if (existingResult) {
-                                const index = results.indexOf(existingResult);
-                                results[index] = item;
-                            } else {
-                                results.push(item);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    });
-    
+    const results = await getUserFilesOptimized(userId);
     console.log(`ユーザー${userId}の検索結果:`, results.length, '件');
     
     // weight順にソート
@@ -1004,12 +1469,10 @@ function displayUserResults(results, userId) {
     
     // userIdに対応するnicknameを取得
     let nickname = userId; // デフォルトはuserIdを使用
-    if (currentData && currentData.nickname_dict && results.length > 0) {
+    if (results.length > 0) {
         // 検索結果の最初のfile_pathからnicknameを取得
         const firstFilePath = results[0].file_path;
-        if (currentData.nickname_dict[firstFilePath] && currentData.nickname_dict[firstFilePath].nickname) {
-            nickname = currentData.nickname_dict[firstFilePath].nickname;
-        }
+        nickname = await getNicknameByFilePath(firstFilePath);
     }
     
     // h2のテキストを変更
@@ -1035,7 +1498,7 @@ function displayUserResults(results, userId) {
     const currentPageResults = results.slice(startIndex, endIndex);
     
     resultsGrid.innerHTML = currentPageResults.map(result => {
-        const title = currentData.page_title_dict[result.file_path] || "無題";
+        const title = await getPageTitle(result.file_path);
         const topKeywords = getTopKeywordsForPath(result.file_path);
         const authorInfo = getAuthorInfo(result.file_path);
         
