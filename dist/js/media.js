@@ -1,6 +1,6 @@
 // Firebase初期化（事前実行）
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpiNeyrFVTuvIWIo7ZgpmdEZSytGfEzMY",
@@ -15,6 +15,10 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ===========================================
+// Firestoreアクセス関数（async必須）
+// ===========================================
 
 // Firestore から keyword タイプのドキュメントを取得して処理
 async function getKeywordWeights() {
@@ -695,576 +699,576 @@ async function getNicknamesByFilePathsBatch(filePaths) {
     }
 }
 
+// ===========================================
+// 同期処理関数（async削除済み）
+// ===========================================
 
+// グローバル変数
+let currentData = null;
+let currentKeyword = '';
+let isUpdatingFromHash = false;
+let currentUserId = '';
+// ページネーション関連の変数
+let currentPage = 1;
+let itemsPerPage = 9;
+let currentResults = [];
+let isSearchMode = false;
 
+// 簡易日本語形態素解析器
+class SimpleJapaneseTokenizer {
+    constructor() {
+        // 一般的な助詞・助動詞・接続詞
+        this.particles = [
+            'は', 'が', 'を', 'に', 'で', 'と', 'から', 'まで', 'より', 'へ', 'も', 'の',
+            'こそ', 'でも', 'だけ', 'ばかり', 'など', 'なら', 'って', 'という'
+        ];
+        
+        this.auxiliaries = [
+            'です', 'である', 'だった', 'でした', 'します', 'ます', 'ました', 'でしょう',
+            'かもしれない', 'に違いない', 'はず', 'べき', 'らしい', 'ようだ', 'みたい'
+        ];
+        
+        this.stopWords = [
+            'これ', 'それ', 'あれ', 'どれ', 'この', 'その', 'あの', 'どの',
+            'ここ', 'そこ', 'あそこ', 'どこ', 'こちら', 'そちら', 'あちら', 'どちら',
+            'いつ', 'どう', 'なぜ', 'なに', 'なん', 'だれ', 'どなた'
+        ];
+    }
 
-        // グローバル変数
-        let currentData = null;
-        let currentKeyword = '';
-        let isUpdatingFromHash = false;
-        let currentUserId = '';
-        // ページネーション関連の変数
-        let currentPage = 1;
-        let itemsPerPage = 9;
-        let currentResults = [];
-        let isSearchMode = false;
+    // 文字種判定
+    isHiragana(char) {
+        return /[\u3041-\u3096]/.test(char);
+    }
+    
+    isKatakana(char) {
+        return /[\u30A1-\u30F6]/.test(char);
+    }
+    
+    isKanji(char) {
+        return /[\u4E00-\u9FAF]/.test(char);
+    }
+    
+    isAlphanumeric(char) {
+        return /[a-zA-Z0-9]/.test(char);
+    }
 
-        // 簡易日本語形態素解析器
-        class SimpleJapaneseTokenizer {
-            constructor() {
-                // 一般的な助詞・助動詞・接続詞
-                this.particles = [
-                    'は', 'が', 'を', 'に', 'で', 'と', 'から', 'まで', 'より', 'へ', 'も', 'の',
-                    'こそ', 'でも', 'だけ', 'ばかり', 'など', 'なら', 'って', 'という'
-                ];
-                
-                this.auxiliaries = [
-                    'です', 'である', 'だった', 'でした', 'します', 'ます', 'ました', 'でしょう',
-                    'かもしれない', 'に違いない', 'はず', 'べき', 'らしい', 'ようだ', 'みたい'
-                ];
-                
-                this.stopWords = [
-                    'これ', 'それ', 'あれ', 'どれ', 'この', 'その', 'あの', 'どの',
-                    'ここ', 'そこ', 'あそこ', 'どこ', 'こちら', 'そちら', 'あちら', 'どちら',
-                    'いつ', 'どう', 'なぜ', 'なに', 'なん', 'だれ', 'どなた'
-                ];
-            }
-
-            // 文字種判定
-            isHiragana(char) {
-                return /[\u3041-\u3096]/.test(char);
-            }
+    // 簡易トークン化
+    tokenize(text) {
+        if (!text) return [];
+        
+        const tokens = [];
+        let currentToken = '';
+        let lastCharType = null;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            let charType = null;
             
-            isKatakana(char) {
-                return /[\u30A1-\u30F6]/.test(char);
-            }
+            if (this.isKanji(char)) charType = 'kanji';
+            else if (this.isHiragana(char)) charType = 'hiragana';
+            else if (this.isKatakana(char)) charType = 'katakana';
+            else if (this.isAlphanumeric(char)) charType = 'alphanumeric';
+            else charType = 'other';
             
-            isKanji(char) {
-                return /[\u4E00-\u9FAF]/.test(char);
-            }
-            
-            isAlphanumeric(char) {
-                return /[a-zA-Z0-9]/.test(char);
-            }
-
-            // 簡易トークン化
-            tokenize(text) {
-                if (!text) return [];
-                
-                const tokens = [];
-                let currentToken = '';
-                let lastCharType = null;
-                
-                for (let i = 0; i < text.length; i++) {
-                    const char = text[i];
-                    let charType = null;
-                    
-                    if (this.isKanji(char)) charType = 'kanji';
-                    else if (this.isHiragana(char)) charType = 'hiragana';
-                    else if (this.isKatakana(char)) charType = 'katakana';
-                    else if (this.isAlphanumeric(char)) charType = 'alphanumeric';
-                    else charType = 'other';
-                    
-                    // 文字種が変わったら分割
-                    if (lastCharType && lastCharType !== charType && 
-                        !(lastCharType === 'kanji' && charType === 'hiragana')) {
-                        if (currentToken.trim()) {
-                            tokens.push(currentToken.trim());
-                        }
-                        currentToken = char;
-                    } else {
-                        currentToken += char;
-                    }
-                    
-                    lastCharType = charType;
-                }
-                
-                // 最後のトークンを追加
+            // 文字種が変わったら分割
+            if (lastCharType && lastCharType !== charType && 
+                !(lastCharType === 'kanji' && charType === 'hiragana')) {
                 if (currentToken.trim()) {
                     tokens.push(currentToken.trim());
                 }
-                
-                return this.filterTokens(tokens);
-            }
-
-            // トークンのフィルタリング
-            filterTokens(tokens) {
-                return tokens.filter(token => {
-                    // 長さチェック
-                    if (token.length < 2) return false;
-                    
-                    // ストップワードチェック
-                    if (this.particles.includes(token) || 
-                        this.auxiliaries.includes(token) || 
-                        this.stopWords.includes(token)) {
-                        return false;
-                    }
-                    
-                    // 数字のみや記号のみを除外
-                    if (/^[\d\s\u3000-\u303F\uFF00-\uFFEF]+$/.test(token)) return false;
-                    
-                    // ひらがなのみで短いものを除外
-                    if (token.length <= 2 && this.isAllHiragana(token)) return false;
-                    
-                    return true;
-                });
-            }
-
-            isAllHiragana(text) {
-                return Array.from(text).every(char => this.isHiragana(char));
-            }
-
-            // キーワード抽出
-            extractKeywords(text, minLength = 2) {
-                const tokens = this.tokenize(text);
-                return tokens.map(token => ({
-                    surface: token,
-                    basic_form: token,
-                    pos: '不明',
-                    pos_detail_1: '不明',
-                    reading: null,
-                    pronunciation: null
-                }));
-            }
-        }
-
-        // トークナイザーのインスタンス作成
-        const tokenizer = new SimpleJapaneseTokenizer();
-
-        // キーワード抽出関数
-        function extractKeywords(text, minLength = 2) {
-            return tokenizer.extractKeywords(text, minLength);
-        }
-
-        // キーワードの総重みを計算（weightが0より多い要素のみ）
-        function calculateKeywordWeights() {
-            const keywordWeights = await getKeywordWeights();
-            return keywordWeights.sort((a, b) => b.totalWeight - a.totalWeight);
-        }
-
-        // タグクラウドを生成（最大10個まで）
-        function generateTagCloud() {
-            const tagCloudContainer = document.getElementById('tagCloud');
-            const keywordWeights = calculateKeywordWeights();
-            
-            // 上位10個に制限
-            const topKeywords = keywordWeights.slice(0, 9);
-            
-            if (topKeywords.length === 0) {
-                tagCloudContainer.innerHTML = '<p style="color: #666;">キーワードがありません</p>';
-                return;
-            }
-            
-            const maxWeight = topKeywords[0].totalWeight;
-            const minWeight = topKeywords[topKeywords.length - 1].totalWeight;
-            
-            tagCloudContainer.innerHTML = topKeywords.map(item => {
-                const sizeClass = getTagSizeClass(item.totalWeight, maxWeight, minWeight);
-                return `<button class="tag-cloud-item ${sizeClass}" onclick="searchByTagCloud('${item.keyword}')">${item.keyword}</button>`;
-            }).join('');
-        }
-
-        // タグのサイズクラスを決定
-        function getTagSizeClass(weight, maxWeight, minWeight) {
-            const ratio = (weight - minWeight) / (maxWeight - minWeight);
-            
-            if (ratio > 0.8) return 'size-xl';
-            if (ratio > 0.6) return 'size-l';
-            if (ratio > 0.4) return 'size-m';
-            return 'size-s';
-        }
-
-        // タグクラウドからの検索（URLハッシュ更新付き）
-        function searchByTagCloud(keyword) {
-            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
-            if (!isUpdatingFromHash) {
-                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
-            }
-            
-            document.getElementById('searchInput').value = keyword;
-            executeKeywordSearch(keyword);
-        }
-
-        // 検索実行（URLハッシュ更新付き）
-        function performSearch() {
-            const searchInput = document.getElementById('searchInput');
-            const keyword = searchInput.value.trim();
-
-            // 既存のperformSearch関数の最初に追加
-            if (!keyword) {
-                displayRecentPosts();
-                return;
-            }
-
-            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
-            if (!isUpdatingFromHash) {
-                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
-            }
-
-            currentKeyword = keyword;
-            showLoading();
-            
-            setTimeout(() => {
-                const results = searchKeyword(keyword);
-                currentResults = results;
-                isSearchMode = true;
-                currentPage = 1;
-                displayResultsWithPagination(results, keyword);
-                hideLoading();
-            }, 500);
-        }
-
-        // キーワード検索
-        function searchKeyword(keyword) {
-            const results = [];
-            
-            // 検索キーワードを解析
-            const searchKeywords = extractKeywords(keyword);
-            console.log('検索キーワード:', keyword);
-            console.log('解析結果:', searchKeywords);
-            
-            // 検索語を収集
-            const searchTerms = new Set();
-            searchKeywords.forEach(kw => {
-                if (kw.surface) searchTerms.add(kw.surface);
-            });
-            searchTerms.add(keyword);
-            
-            const filteredSearchTerms = Array.from(searchTerms).filter(term => 
-                term && term.length > 1
-            );
-            
-            console.log('検索語:', filteredSearchTerms);
-
-            const searchKeywordResults = await searchKeywordsHybrid(filteredSearchTerms);
-            const searchTitleResults = await searchPageTitles(filteredSearchTerms);
-
-            // 重複除去とweight順ソート
-            const uniqueResults = [];
-            const seenPaths = new Set();
-            
-            searchKeywordResults.forEach(result => {
-                if (!seenPaths.has(result.file_path)) {
-                    seenPaths.add(result.file_path);
-                    uniqueResults.push(result);
-                }
-            });
-            searchTitleResults.forEach(result => {
-                if (!seenPaths.has(result.file_path)) {
-                    seenPaths.add(result.file_path);
-                    uniqueResults.push(result);
-                }
-            });
-
-            return uniqueResults.sort((a, b) => b.weight - a.weight);
-        }
-
-        // ページネーション付きで検索結果を表示
-        function displayResultsWithPagination(results, keyword) {
-            const resultsGrid = document.getElementById('resultsGrid');
-            const resultsCount = document.getElementById('resultsCount');
-            const noResults = document.getElementById('noResults');
-            const resultsInfoH2 = document.querySelector('#resultsInfo h2');
-            
-            // h2のテキストを検索結果に戻す
-            if (resultsInfoH2) {
-                resultsInfoH2.textContent = '検索結果';
-            }
-            
-            resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
-            
-            if (results.length === 0) {
-                resultsGrid.innerHTML = '';
-                noResults.style.display = 'block';
-                hidePagination();
-                return;
-            }
-
-            noResults.style.display = 'none';
-            
-            // ページネーション用のデータ計算
-            const totalPages = Math.ceil(results.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const currentPageResults = results.slice(startIndex, endIndex);
-            
-            resultsGrid.innerHTML = currentPageResults.map(result => {
-                const title = await getPageTitle(result.file_path);
-                const topKeywords = getTopKeywordsForPath(result.file_path);
-                const authorInfo = getAuthorInfo(result.file_path);
-                
-                return `
-                    <a href="${result.file_path}" class="result-card">
-                        <div class="result-title">${title}</div>
-                        ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
-                        <div class="result-keywords">
-                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                        </div>
-                    </a>
-                `;
-            }).join('');
-            
-            // ページネーションコントロールを表示
-            if (totalPages > 1) {
-                showPagination(currentPage, totalPages, results.length);
+                currentToken = char;
             } else {
-                hidePagination();
+                currentToken += char;
             }
+            
+            lastCharType = charType;
         }
-
-        // 最新投稿順でページを取得する関数
-        function getRecentPages() {
-            // sort_dictからタイムスタンプ順でソート
-            const sortedPages = await getSortedPages();        
-            return sortedPages;
+        
+        // 最後のトークンを追加
+        if (currentToken.trim()) {
+            tokens.push(currentToken.trim());
         }
+        
+        return this.filterTokens(tokens);
+    }
 
-        // ページネーション付きで最新投稿順の結果を表示する関数
-        function displayRecentPosts() {            
-            const recentPages = getRecentPages();
-            currentResults = recentPages;
-            isSearchMode = false;
-            currentPage = 1;
+    // トークンのフィルタリング
+    filterTokens(tokens) {
+        return tokens.filter(token => {
+            // 長さチェック
+            if (token.length < 2) return false;
             
-            const resultsGrid = document.getElementById('resultsGrid');
-            const resultsCount = document.getElementById('resultsCount');
-            const noResults = document.getElementById('noResults');
-            const resultsInfoH2 = document.querySelector('#resultsInfo h2');
-            
-            // h2のテキストを変更
-            if (resultsInfoH2) {
-                resultsInfoH2.textContent = '最近の分析事例';
+            // ストップワードチェック
+            if (this.particles.includes(token) || 
+                this.auxiliaries.includes(token) || 
+                this.stopWords.includes(token)) {
+                return false;
             }
             
-            resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
+            // 数字のみや記号のみを除外
+            if (/^[\d\s\u3000-\u303F\uFF00-\uFFEF]+$/.test(token)) return false;
             
-            if (recentPages.length === 0) {
-                resultsGrid.innerHTML = '';
-                noResults.style.display = 'block';
-                hidePagination();
-                return;
-            }
+            // ひらがなのみで短いものを除外
+            if (token.length <= 2 && this.isAllHiragana(token)) return false;
+            
+            return true;
+        });
+    }
 
-            noResults.style.display = 'none';
-            
-            // ページネーション用のデータ計算
-            const totalPages = Math.ceil(recentPages.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const currentPageResults = recentPages.slice(startIndex, endIndex);
-            
-            resultsGrid.innerHTML = currentPageResults.map(page => {
-                const title = await getPageTitle(page.file_path);
-                const topKeywords = getTopKeywordsForPath(page.file_path);
-                const authorInfo = getAuthorInfo(page.file_path);
-                
-                return `
-                    <a href="${page.file_path}" class="result-card">
-                        <div class="result-title">${title}</div>
-                        ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
-                        <div class="result-keywords">
-                            ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                        </div>
-                    </a>
-                `;
-            }).join('');
-            
-            // ページネーションコントロールを表示
-            if (totalPages > 1) {
-                showPagination(currentPage, totalPages, recentPages.length);
+    isAllHiragana(text) {
+        return Array.from(text).every(char => this.isHiragana(char));
+    }
+
+    // キーワード抽出
+    extractKeywords(text, minLength = 2) {
+        const tokens = this.tokenize(text);
+        return tokens.map(token => ({
+            surface: token,
+            basic_form: token,
+            pos: '不明',
+            pos_detail_1: '不明',
+            reading: null,
+            pronunciation: null
+        }));
+    }
+}
+
+// トークナイザーのインスタンス作成
+const tokenizer = new SimpleJapaneseTokenizer();
+
+// キーワード抽出関数
+function extractKeywords(text, minLength = 2) {
+    return tokenizer.extractKeywords(text, minLength);
+}
+
+// キーワードの総重みを計算（weightが0より多い要素のみ）
+function calculateKeywordWeights(keywordWeightsData) {
+    return keywordWeightsData.sort((a, b) => b.totalWeight - a.totalWeight);
+}
+
+// タグクラウドを生成（最大10個まで）
+function generateTagCloud(keywordWeights) {
+    const tagCloudContainer = document.getElementById('tagCloud');
+    
+    // 上位10個に制限
+    const topKeywords = keywordWeights.slice(0, 9);
+    
+    if (topKeywords.length === 0) {
+        tagCloudContainer.innerHTML = '<p style="color: #666;">キーワードがありません</p>';
+        return;
+    }
+    
+    const maxWeight = topKeywords[0].totalWeight;
+    const minWeight = topKeywords[topKeywords.length - 1].totalWeight;
+    
+    tagCloudContainer.innerHTML = topKeywords.map(item => {
+        const sizeClass = getTagSizeClass(item.totalWeight, maxWeight, minWeight);
+        return `<button class="tag-cloud-item ${sizeClass}" onclick="searchByTagCloud('${item.keyword}')">${item.keyword}</button>`;
+    }).join('');
+}
+
+// タグのサイズクラスを決定
+function getTagSizeClass(weight, maxWeight, minWeight) {
+    const ratio = (weight - minWeight) / (maxWeight - minWeight);
+    
+    if (ratio > 0.8) return 'size-xl';
+    if (ratio > 0.6) return 'size-l';
+    if (ratio > 0.4) return 'size-m';
+    return 'size-s';
+}
+
+// タグクラウドからの検索（URLハッシュ更新付き）
+function searchByTagCloud(keyword) {
+    // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+    if (!isUpdatingFromHash) {
+        window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+    }
+    
+    document.getElementById('searchInput').value = keyword;
+    executeKeywordSearch(keyword);
+}
+
+// 検索実行（URLハッシュ更新付き）
+function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const keyword = searchInput.value.trim();
+
+    // 既存のperformSearch関数の最初に追加
+    if (!keyword) {
+        displayRecentPosts();
+        return;
+    }
+
+    // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+    if (!isUpdatingFromHash) {
+        window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+    }
+
+    currentKeyword = keyword;
+    showLoading();
+    
+    setTimeout(async () => {
+        const results = await searchKeyword(keyword);
+        currentResults = results;
+        isSearchMode = true;
+        currentPage = 1;
+        await displayResultsWithPagination(results, keyword);
+        hideLoading();
+    }, 500);
+}
+
+// キーワード検索
+async function searchKeyword(keyword) {
+    const results = [];
+    
+    // 検索キーワードを解析
+    const searchKeywords = extractKeywords(keyword);
+    console.log('検索キーワード:', keyword);
+    console.log('解析結果:', searchKeywords);
+    
+    // 検索語を収集
+    const searchTerms = new Set();
+    searchKeywords.forEach(kw => {
+        if (kw.surface) searchTerms.add(kw.surface);
+    });
+    searchTerms.add(keyword);
+    
+    const filteredSearchTerms = Array.from(searchTerms).filter(term => 
+        term && term.length > 1
+    );
+    
+    console.log('検索語:', filteredSearchTerms);
+
+    const searchKeywordResults = await searchKeywordsHybrid(filteredSearchTerms);
+    const searchTitleResults = await searchPageTitles(filteredSearchTerms);
+
+    // 重複除去とweight順ソート
+    const uniqueResults = [];
+    const seenPaths = new Set();
+    
+    searchKeywordResults.forEach(result => {
+        if (!seenPaths.has(result.file_path)) {
+            seenPaths.add(result.file_path);
+            uniqueResults.push(result);
+        }
+    });
+    searchTitleResults.forEach(result => {
+        if (!seenPaths.has(result.file_path)) {
+            seenPaths.add(result.file_path);
+            uniqueResults.push(result);
+        }
+    });
+
+    return uniqueResults.sort((a, b) => b.weight - a.weight);
+}
+
+// ページネーション付きで検索結果を表示
+async function displayResultsWithPagination(results, keyword) {
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+    
+    // h2のテキストを検索結果に戻す
+    if (resultsInfoH2) {
+        resultsInfoH2.textContent = '検索結果';
+    }
+    
+    resultsCount.textContent = `"${keyword}" の検索結果: ${results.length}件`;
+    
+    if (results.length === 0) {
+        resultsGrid.innerHTML = '';
+        noResults.style.display = 'block';
+        hidePagination();
+        return;
+    }
+
+    noResults.style.display = 'none';
+    
+    // ページネーション用のデータ計算
+    const totalPages = Math.ceil(results.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageResults = results.slice(startIndex, endIndex);
+    
+    // 各結果に対してタイトル、キーワード、著者情報を並列取得
+    const resultPromises = currentPageResults.map(async (result) => {
+        const [title, topKeywords, authorInfo] = await Promise.all([
+            getPageTitle(result.file_path),
+            getTopKeywordsForPath(result.file_path),
+            getAuthorInfo(result.file_path)
+        ]);
+        
+        return `
+            <a href="${result.file_path}" class="result-card">
+                <div class="result-title">${title || 'タイトルなし'}</div>
+                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                <div class="result-keywords">
+                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                </div>
+            </a>
+        `;
+    });
+    
+    const resultCards = await Promise.all(resultPromises);
+    resultsGrid.innerHTML = resultCards.join('');
+    
+    // ページネーションコントロールを表示
+    if (totalPages > 1) {
+        showPagination(currentPage, totalPages, results.length);
+    } else {
+        hidePagination();
+    }
+}
+
+// ページネーション付きで最新投稿順の結果を表示する関数
+async function displayRecentPosts() {            
+    const recentPages = await getSortedPages();
+    currentResults = recentPages;
+    isSearchMode = false;
+    currentPage = 1;
+    
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsCount = document.getElementById('resultsCount');
+    const noResults = document.getElementById('noResults');
+    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+    
+    // h2のテキストを変更
+    if (resultsInfoH2) {
+        resultsInfoH2.textContent = '最近の分析事例';
+    }
+    
+    resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
+    
+    if (recentPages.length === 0) {
+        resultsGrid.innerHTML = '';
+        noResults.style.display = 'block';
+        hidePagination();
+        return;
+    }
+
+    noResults.style.display = 'none';
+    
+    // ページネーション用のデータ計算
+    const totalPages = Math.ceil(recentPages.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageResults = recentPages.slice(startIndex, endIndex);
+    
+    // 各結果に対してタイトル、キーワード、著者情報を並列取得
+    const resultPromises = currentPageResults.map(async (page) => {
+        const [title, topKeywords, authorInfo] = await Promise.all([
+            getPageTitle(page.file_path),
+            getTopKeywordsForPath(page.file_path),
+            getAuthorInfo(page.file_path)
+        ]);
+        
+        return `
+            <a href="${page.file_path}" class="result-card">
+                <div class="result-title">${title || 'タイトルなし'}</div>
+                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                <div class="result-keywords">
+                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                </div>
+            </a>
+        `;
+    });
+    
+    const resultCards = await Promise.all(resultPromises);
+    resultsGrid.innerHTML = resultCards.join('');
+    
+    // ページネーションコントロールを表示
+    if (totalPages > 1) {
+        showPagination(currentPage, totalPages, recentPages.length);
+    } else {
+        hidePagination();
+    }
+}
+
+// ページネーションコントロールを表示
+function showPagination(currentPageNum, totalPages, totalItems) {
+    const paginationControls = document.getElementById('paginationControls');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const paginationInfo = document.getElementById('paginationInfo');
+    
+    paginationControls.style.display = 'flex';
+    
+    // ボタンの有効/無効を設定
+    prevBtn.disabled = currentPageNum === 1;
+    nextBtn.disabled = currentPageNum === totalPages;
+    
+    // ページ情報を更新
+    const startItem = (currentPageNum - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPageNum * itemsPerPage, totalItems);
+    paginationInfo.textContent = `${startItem}-${endItem}件 / 全${totalItems}件 (${currentPageNum}/${totalPages}ページ)`;
+}
+
+// ページネーションコントロールを非表示
+function hidePagination() {
+    const paginationControls = document.getElementById('paginationControls');
+    paginationControls.style.display = 'none';
+}
+
+// 次のページへ
+async function goToNextPage() {
+    const totalPages = Math.ceil(currentResults.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        if (isSearchMode) {
+            if (currentUserId) {
+                // ユーザー検索モードの場合
+                await displayUserResults(currentResults, currentUserId);
             } else {
-                hidePagination();
+                // キーワード検索モードの場合
+                await displayResultsWithPagination(currentResults, currentKeyword);
             }
+        } else {
+            await displayRecentPosts();
         }
+        scrollToResults();
+    }
+}
 
-        // ページネーションコントロールを表示
-        function showPagination(currentPageNum, totalPages, totalItems) {
-            const paginationControls = document.getElementById('paginationControls');
-            const prevBtn = document.getElementById('prevPageBtn');
-            const nextBtn = document.getElementById('nextPageBtn');
-            const paginationInfo = document.getElementById('paginationInfo');
-            
-            paginationControls.style.display = 'flex';
-            
-            // ボタンの有効/無効を設定
-            prevBtn.disabled = currentPageNum === 1;
-            nextBtn.disabled = currentPageNum === totalPages;
-            
-            // ページ情報を更新
-            const startItem = (currentPageNum - 1) * itemsPerPage + 1;
-            const endItem = Math.min(currentPageNum * itemsPerPage, totalItems);
-            paginationInfo.textContent = `${startItem}-${endItem}件 / 全${totalItems}件 (${currentPageNum}/${totalPages}ページ)`;
-        }
-
-        // ページネーションコントロールを非表示
-        function hidePagination() {
-            const paginationControls = document.getElementById('paginationControls');
-            paginationControls.style.display = 'none';
-        }
-
-        // 次のページへ
-        function goToNextPage() {
-            const totalPages = Math.ceil(currentResults.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                if (isSearchMode) {
-                    if (currentUserId) {
-                        // ユーザー検索モードの場合
-                        displayUserResults(currentResults, currentUserId);
-                    } else {
-                        // キーワード検索モードの場合
-                        displayResultsWithPagination(currentResults, currentKeyword);
-                    }
-                } else {
-                    displayRecentPosts();
-                }
-                scrollToResults();
+// 前のページへ
+async function goToPreviousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        if (isSearchMode) {
+            if (currentUserId) {
+                // ユーザー検索モードの場合
+                await displayUserResults(currentResults, currentUserId);
+            } else {
+                // キーワード検索モードの場合
+                await displayResultsWithPagination(currentResults, currentKeyword);
             }
+        } else {
+            await displayRecentPosts();
         }
+        scrollToResults();
+    }
+}
 
-        // 前のページへ
-        function goToPreviousPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                if (isSearchMode) {
-                    if (currentUserId) {
-                        // ユーザー検索モードの場合
-                        displayUserResults(currentResults, currentUserId);
-                    } else {
-                        // キーワード検索モードの場合
-                        displayResultsWithPagination(currentResults, currentKeyword);
-                    }
-                } else {
-                    displayRecentPosts();
-                }
-                scrollToResults();
-            }
+// ローディング表示
+function showLoading() {
+    document.getElementById('loadingIndicator').style.display = 'block';
+    document.getElementById('resultsGrid').style.display = 'none';
+    document.getElementById('noResults').style.display = 'none';
+    hidePagination();
+}
+
+// ローディング非表示
+function hideLoading() {
+    document.getElementById('loadingIndicator').style.display = 'none';
+    document.getElementById('resultsGrid').style.display = 'grid';
+}
+
+// Enterキーで検索
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+
+// キーワードタグクリック時の処理（URLハッシュ更新付き）
+function searchByKeywordTag(event, keyword) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
+    if (!isUpdatingFromHash) {
+        window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
+    }
+    
+    setSearchKeyword(keyword);
+    executeKeywordSearch(keyword);
+}
+
+// 検索フォームにキーワードを設定する関数
+function setSearchKeyword(keyword) {
+    const searchInput = document.getElementById('searchInput');
+    searchInput.value = keyword;
+    searchInput.focus();
+    searchInput.select();
+}
+
+// キーワード検索を実行する関数（URLハッシュ更新付き）
+function executeKeywordSearch(keyword) {
+    // ハッシュ更新からの処理中は重複更新を避ける
+    if (!isUpdatingFromHash) {
+        // URLハッシュが現在のキーワードと異なる場合のみ更新
+        const currentHash = window.location.hash;
+        const expectedHash = `#keyword=${encodeURIComponent(keyword)}`;
+        if (currentHash !== expectedHash) {
+            window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
         }
+    }
 
-        // file_pathに紐づく上位5つのキーワードを取得
-        function getTopKeywordsForPath(filePath) {
-            const keywords = await getTopKeywordsForPathsBatch(filePath);            
-            return keywords;
-        }
+    currentKeyword = keyword;
+    showLoading();
+    
+    setTimeout(async () => {
+        const results = await searchKeyword(keyword);
+        currentResults = results;
+        isSearchMode = true;
+        currentPage = 1;
+        await displayResultsWithPagination(results, keyword);
+        hideLoading();
+        scrollToResults();
+    }, 300);
+}
 
-        // ローディング表示
-        function showLoading() {
-            document.getElementById('loadingIndicator').style.display = 'block';
-            document.getElementById('resultsGrid').style.display = 'none';
-            document.getElementById('noResults').style.display = 'none';
-            hidePagination();
-        }
-
-        // ローディング非表示
-        function hideLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
-            document.getElementById('resultsGrid').style.display = 'grid';
-        }
-
-        // Enterキーで検索
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
+// 検索結果セクションへのスムーズスクロール関数
+function scrollToResults() {
+    const resultsSection = document.getElementById('resultsInfo');
+    if (resultsSection) {
+        resultsSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
         });
+    }
+}
 
-        // キーワードタグクリック時の処理（URLハッシュ更新付き）
-        function searchByKeywordTag(event, keyword) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // ハッシュ更新からの処理中でない場合のみURLハッシュを更新
-            if (!isUpdatingFromHash) {
-                window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
-            }
-            
-            setSearchKeyword(keyword);
-            executeKeywordSearch(keyword);
-        }
+// キーワードデータを読み込む関数
+async function loadKeywordData() {
+    try {
+        const keywordWeights = await getKeywordWeights();
+        const sortedKeywords = calculateKeywordWeights(keywordWeights);
+        generateTagCloud(sortedKeywords);
+        console.log('キーワードデータを読み込みました');
+    } catch (error) {
+        console.error('キーワードデータ読み込みエラー:', error);
+    }
+}
 
-        // 検索フォームにキーワードを設定する関数
-        function setSearchKeyword(keyword) {
-            const searchInput = document.getElementById('searchInput');
-            searchInput.value = keyword;
-            searchInput.focus();
-            searchInput.select();
-        }
+// アプリケーション初期化
+async function initializeApp() {
+    console.log('アプリケーションを初期化中...');
+    
+    // ステータス更新
+    const statusSection = document.getElementById('statusSection');
+    statusSection.style.display = 'block';
+    
+    // データを読み込み
+    await loadKeywordData();
+    
+    // 初期化完了後、ステータスを3秒後に非表示
+    setTimeout(() => {
+        statusSection.style.display = 'none';
+    }, 500);
+    
+    console.log('初期化完了');
+}
 
-        // キーワード検索を実行する関数（URLハッシュ更新付き）
-        function executeKeywordSearch(keyword) {
-            // ハッシュ更新からの処理中は重複更新を避ける
-            if (!isUpdatingFromHash) {
-                // URLハッシュが現在のキーワードと異なる場合のみ更新
-                const currentHash = window.location.hash;
-                const expectedHash = `#keyword=${encodeURIComponent(keyword)}`;
-                if (currentHash !== expectedHash) {
-                    window.location.hash = `keyword=${encodeURIComponent(keyword)}`;
-                }
-            }
+// ページ読み込み時に初期化
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+});
 
-            currentKeyword = keyword;
-            showLoading();
-            
-            setTimeout(() => {
-                const results = searchKeyword(keyword);
-                currentResults = results;
-                isSearchMode = true;
-                currentPage = 1;
-                displayResultsWithPagination(results, keyword);
-                hideLoading();
-                scrollToResults();
-            }, 300);
-        }
-
-        // 検索結果セクションへのスムーズスクロール関数
-        function scrollToResults() {
-            const resultsSection = document.getElementById('resultsInfo');
-            if (resultsSection) {
-                resultsSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }
-
-        // キーワードデータを読み込む関数
-        async function loadKeywordData() {
-            //const response = await fetch('data/keyword_weight.json');
-            //const data = await response.json();
-            //currentData = data;
-            //console.log('キーワードデータを読み込みました');
-            
-            generateTagCloud();
-        }
-
-        // アプリケーション初期化
-        async function initializeApp() {
-            console.log('アプリケーションを初期化中...');
-            
-            // ステータス更新
-            const statusSection = document.getElementById('statusSection');
-            statusSection.style.display = 'block';
-            
-            // データを読み込み
-            await loadKeywordData();
-            
-            // 初期化完了後、ステータスを3秒後に非表示
-            setTimeout(() => {
-                statusSection.style.display = 'none';
-            }, 500);
-            
-            console.log('初期化完了');
-        }
-
-        // ページ読み込み時に初期化
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeApp();
-        });
-
-        // グローバルエラーハンドラ
-        window.addEventListener('error', (event) => {
-            console.error('アプリケーションエラー:', event.error);
-        });
+// グローバルエラーハンドラ
+window.addEventListener('error', (event) => {
+    console.error('アプリケーションエラー:', event.error);
+});
 
 // URLハッシュ値からキーワードまたはユーザーを抽出して検索する機能
 function handleHashKeyword() {
@@ -1301,8 +1305,8 @@ function handleHashKeyword() {
             
             // データ読み込み完了まで待機してからユーザー検索実行
             const checkDataInterval = setInterval(() => {
-                    clearInterval(checkDataInterval);
-                    executeUserSearchFromHash(trimmedUserId);
+                clearInterval(checkDataInterval);
+                executeUserSearchFromHash(trimmedUserId);
             }, 100);
         
             // 10秒でタイムアウト
@@ -1358,79 +1362,78 @@ function handleHashKeyword() {
     }
 }
 
-        // ハッシュからの検索実行（ハッシュ更新なし）
-        function executeKeywordSearchFromHash(keyword) {
-            currentKeyword = keyword;
-            currentUserId = ''; // ユーザー検索の状態をクリア
-            showLoading();
-            
-            setTimeout(() => {
-                const results = searchKeyword(keyword);
-                currentResults = results;
-                isSearchMode = true;
-                currentPage = 1;
-                displayResultsWithPagination(results, keyword);
-                hideLoading();
-                scrollToResults();
-                isUpdatingFromHash = false; // 処理完了後にフラグをリセット
-            }, 300);
-        }
+// ハッシュからの検索実行（ハッシュ更新なし）
+function executeKeywordSearchFromHash(keyword) {
+    currentKeyword = keyword;
+    currentUserId = ''; // ユーザー検索の状態をクリア
+    showLoading();
+    
+    setTimeout(async () => {
+        const results = await searchKeyword(keyword);
+        currentResults = results;
+        isSearchMode = true;
+        currentPage = 1;
+        await displayResultsWithPagination(results, keyword);
+        hideLoading();
+        scrollToResults();
+        isUpdatingFromHash = false; // 処理完了後にフラグをリセット
+    }, 300);
+}
 
-        // ページ読み込み時とハッシュ変更時にハッシュキーワードをチェック
-        window.addEventListener('load', handleHashKeyword);
-        window.addEventListener('hashchange', handleHashKeyword);
+// ページ読み込み時とハッシュ変更時にハッシュキーワードをチェック
+window.addEventListener('load', handleHashKeyword);
+window.addEventListener('hashchange', handleHashKeyword);
+
+// 初期化完了後の遅延チェック用
+let hashCheckTimeout = null;
+
+function scheduleHashCheck() {
+    if (hashCheckTimeout) {
+        clearTimeout(hashCheckTimeout);
+    }
+    hashCheckTimeout = setTimeout(() => {
+        if (!isUpdatingFromHash) {
+            handleHashKeyword();
+        }
+    }, 500);
+}
+
+// DOMContentLoaded時の処理（重複登録を避ける）
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleHashCheck);
+} else {
+    scheduleHashCheck();
+}
+
+// アプリケーション初期化時に最新投稿を表示する関数
+function displayInitialContent() {
+    displayRecentPosts();
+}
+
+// 既存のinitializeApp関数の後に実行される初期化処理
+function enhancedInitialization() {
+    // データ読み込み完了をチェック
+    const checkDataAndDisplay = setInterval(() => {
+        clearInterval(checkDataAndDisplay);
         
-        // 初期化完了後の遅延チェック用
-        let hashCheckTimeout = null;
-        
-        function scheduleHashCheck() {
-            if (hashCheckTimeout) {
-                clearTimeout(hashCheckTimeout);
-            }
-            hashCheckTimeout = setTimeout(() => {
-                if (!isUpdatingFromHash) {
-                    handleHashKeyword();
-                }
-            }, 500);
+        // URLハッシュにキーワードがない場合は最新投稿を表示
+        const hash = window.location.hash;
+        if (!hash.startsWith('#keyword=') && !hash.startsWith('#user=')) {
+            setTimeout(displayInitialContent, 500);
         }
+    }, 100);
+    
+    // 10秒でタイムアウト
+    setTimeout(() => {
+        clearInterval(checkDataAndDisplay);
+    }, 10000);
+}
 
-        // DOMContentLoaded時の処理（重複登録を避ける）
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', scheduleHashCheck);
-        } else {
-            scheduleHashCheck();
-        }
+// 既存のHTML onclickを置き換えるためのグローバル関数
+window.performSearch = performSearch;
 
-        // アプリケーション初期化時に最新投稿を表示する関数
-        function displayInitialContent() {
-            displayRecentPosts();
-        }
-
-        // 既存のinitializeApp関数の後に実行される初期化処理
-        function enhancedInitialization() {
-            // データ読み込み完了をチェック
-            const checkDataAndDisplay = setInterval(() => {
-                    clearInterval(checkDataAndDisplay);
-                    
-                    // URLハッシュにキーワードがない場合は最新投稿を表示
-                    const hash = window.location.hash;
-                    if (!hash.startsWith('#keyword=') && !hash.startsWith('#user=')) {
-                        setTimeout(displayInitialContent, 500);
-                    }
-            }, 100);
-            
-            // 10秒でタイムアウト
-            setTimeout(() => {
-                clearInterval(checkDataAndDisplay);
-            }, 10000);
-        }
-
-        // 既存のHTML onclickを置き換えるためのグローバル関数
-        window.performSearch = performSearch;
-
-        // 拡張初期化を実行
-        enhancedInitialization();
-
+// 拡張初期化を実行
+enhancedInitialization();
 
 // ユーザー検索を実行する関数（ハッシュ更新なし）
 function executeUserSearchFromHash(userId) {
@@ -1439,12 +1442,12 @@ function executeUserSearchFromHash(userId) {
         
     showLoading();
     
-    setTimeout(() => {
-        const results = searchByUser(userId);
+    setTimeout(async () => {
+        const results = await searchByUser(userId);
         currentResults = results;
         isSearchMode = true;
         currentPage = 1;
-        displayUserResults(results, userId);
+        await displayUserResults(results, userId);
         hideLoading();
         scrollToResults();
         isUpdatingFromHash = false; // 処理完了後にフラグをリセット
@@ -1452,7 +1455,7 @@ function executeUserSearchFromHash(userId) {
 }
 
 // ユーザー検索関数
-function searchByUser(userId) {
+async function searchByUser(userId) {
     const results = await getUserFilesOptimized(userId);
     console.log(`ユーザー${userId}の検索結果:`, results.length, '件');
     
@@ -1461,7 +1464,7 @@ function searchByUser(userId) {
 }
 
 // ユーザー検索結果を表示
-function displayUserResults(results, userId) {
+async function displayUserResults(results, userId) {
     const resultsGrid = document.getElementById('resultsGrid');
     const resultsCount = document.getElementById('resultsCount');
     const noResults = document.getElementById('noResults');
@@ -1472,7 +1475,7 @@ function displayUserResults(results, userId) {
     if (results.length > 0) {
         // 検索結果の最初のfile_pathからnicknameを取得
         const firstFilePath = results[0].file_path;
-        nickname = await getNicknameByFilePath(firstFilePath);
+        nickname = await getNicknameByFilePath(firstFilePath) || userId;
     }
     
     // h2のテキストを変更
@@ -1497,21 +1500,27 @@ function displayUserResults(results, userId) {
     const endIndex = startIndex + itemsPerPage;
     const currentPageResults = results.slice(startIndex, endIndex);
     
-    resultsGrid.innerHTML = currentPageResults.map(result => {
-        const title = await getPageTitle(result.file_path);
-        const topKeywords = getTopKeywordsForPath(result.file_path);
-        const authorInfo = getAuthorInfo(result.file_path);
+    // 各結果に対してタイトル、キーワード、著者情報を並列取得
+    const resultPromises = currentPageResults.map(async (result) => {
+        const [title, topKeywords, authorInfo] = await Promise.all([
+            getPageTitle(result.file_path),
+            getTopKeywordsForPath(result.file_path),
+            getAuthorInfo(result.file_path)
+        ]);
         
         return `
             <a href="${result.file_path}" class="result-card">
-                <div class="result-title">${title}</div>
+                <div class="result-title">${title || 'タイトルなし'}</div>
                 ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
                 <div class="result-keywords">
                     ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
                 </div>
             </a>
         `;
-    }).join('');
+    });
+    
+    const resultCards = await Promise.all(resultPromises);
+    resultsGrid.innerHTML = resultCards.join('');
     
     // ページネーションコントロールを表示
     if (totalPages > 1) {
@@ -1520,7 +1529,3 @@ function displayUserResults(results, userId) {
         hidePagination();
     }
 }
-
-
-
-
