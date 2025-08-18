@@ -1098,21 +1098,17 @@ class ParasAICaptureSystem {
         style.id = 'paras_ai_capture_css_fix';
         
         const htmlStyle = window.getComputedStyle(document.documentElement);
-        const bodyStyle = window.getComputedStyle(document.body);
-        
-        // CSS変数を動的に検出
         const cssVars = this.detectCSSVariables(htmlStyle);
         
         console.log('検出されたCSS変数:', cssVars);
         
-        // CSS変数解決用のスタイルを生成
         const cssText = this.generateCSSVariableOverrides(cssVars);
         
         style.textContent = cssText;
         document.head.appendChild(style);
         
-        // スタイル適用を待つ
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // 強制的にスタイルを再計算させる
+        document.body.offsetHeight; // リフロー強制
         
         console.log(`${Object.keys(cssVars).length}個のCSS変数を実際の値で上書きしました`);
         return style;
