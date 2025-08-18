@@ -1102,7 +1102,6 @@ class ParasAICaptureSystem {
         
         console.log('検出されたCSS変数:', cssVars);
         
-        // ★ここで修正されたgenerateCSSVariableOverridesが呼び出される★
         const cssText = this.generateCSSVariableOverrides(cssVars);
         
         style.textContent = cssText;
@@ -1111,25 +1110,46 @@ class ParasAICaptureSystem {
         // 強制的にスタイルを再計算させる
         document.body.offsetHeight; // リフロー強制
         
-        // h1要素に直接スタイルを適用（確実性を高める）
+        // ★ここから下が新しく追加する部分 ★
+        
+        // content-card要素の直接修正
+        const contentCards = document.querySelectorAll('.content-card');
+        contentCards.forEach(card => {
+            card.style.setProperty('background', 'white', 'important');
+            card.style.setProperty('background-color', 'white', 'important');
+            card.style.setProperty('opacity', '1', 'important');
+            card.style.setProperty('backdrop-filter', 'none', 'important');
+        });
+        
+        // h1要素に直接スタイルを適用
         const h1Elements = document.querySelectorAll('h1, .title, .markdown-body h1');
-        const textColor = cssVars['--color_text_default'] || '#1b1b1b';
+        const textColor = cssVars['--color_text_default'] || 'rgb(27, 27, 27)';
         
         h1Elements.forEach(h1 => {
             h1.style.setProperty('color', textColor, 'important');
             h1.style.setProperty('background', 'none', 'important');
+            h1.style.setProperty('background-image', 'none', 'important');
             h1.style.setProperty('-webkit-background-clip', 'unset', 'important');
             h1.style.setProperty('-webkit-text-fill-color', 'unset', 'important');
             h1.style.setProperty('background-clip', 'unset', 'important');
             h1.style.setProperty('font-weight', '700', 'important');
+            h1.style.setProperty('opacity', '1', 'important');
         });
+        
+        // 全テキスト要素の不透明度を強制設定
+        const textElements = document.querySelectorAll('.content-text, .source-text, .user_info, .source-title');
+        textElements.forEach(elem => {
+            elem.style.setProperty('opacity', '1', 'important');
+        });
+        
+        // ★ここまでが新しく追加する部分 ★
         
         console.log(`${Object.keys(cssVars).length}個のCSS変数を実際の値で上書きしました`);
         console.log(`${h1Elements.length}個のh1要素のスタイルを直接修正しました`);
+        console.log(`${contentCards.length}個のcontent-card要素を修正しました`);
         
         return style;
     }
-
     // CSS変数を動的に検出する関数
     detectCSSVariables(computedStyle) {
         const cssVars = {};
@@ -1203,14 +1223,29 @@ class ParasAICaptureSystem {
                 ${fontVar ? `font-family: ${fontVar} !important;` : ''}
             }
             
-            .main-container, .content-card, .header {
+            /* content-cardの透明度を修正 */
+            .content-card {
+                background: white !important;
+                background-color: white !important;
+                opacity: 1 !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border: 1px solid rgba(240, 240, 240, 0.8) !important;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+            }
+            
+            .main-container, .header {
                 ${backgroundVar ? `background-color: ${backgroundVar} !important;` : ''}
+                opacity: 1 !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
             }
             
             /* h1タグ専用の修正 */
             .title, h1, .markdown-body h1 {
-                color: ${textVar || '#1b1b1b'} !important;
+                color: ${textVar || 'rgb(27, 27, 27)'} !important;
                 background: none !important;
+                background-image: none !important;
                 -webkit-background-clip: unset !important;
                 -webkit-text-fill-color: unset !important;
                 background-clip: unset !important;
@@ -1218,30 +1253,56 @@ class ParasAICaptureSystem {
                 font-size: 2rem !important;
                 line-height: 1.4 !important;
                 margin: 0 0 20px 0 !important;
+                opacity: 1 !important;
             }
             
             /* h2タグも修正 */
             .source-title, h2, .markdown-body h2 {
-                color: ${textVar || '#1b1b1b'} !important;
+                color: ${textVar || 'rgb(27, 27, 27)'} !important;
                 background: none !important;
+                background-image: none !important;
                 -webkit-background-clip: unset !important;
                 -webkit-text-fill-color: unset !important;
                 background-clip: unset !important;
                 font-weight: 600 !important;
                 font-size: 1.2rem !important;
+                opacity: 1 !important;
             }
             
-            /* グラデーションテキストを無効化 */
+            /* テキストコンテンツの強化 */
+            .content-text, .source-text {
+                color: ${cssVars['--color_bTITB0_default'] || 'rgb(67, 67, 67)'} !important;
+                background: rgba(108, 92, 231, 0.05) !important;
+                opacity: 1 !important;
+                font-weight: 400 !important;
+            }
+            
+            /* user_info の修正 */
+            .user_info {
+                color: ${cssVars['--color_bTITF0_default'] || 'rgb(135, 135, 135)'} !important;
+                background: rgba(240, 240, 240, 0.8) !important;
+                opacity: 1 !important;
+            }
+            
+            /* リンクの修正 */
+            a {
+                color: ${primaryVar || 'rgb(74, 63, 184)'} !important;
+                opacity: 1 !important;
+                text-decoration: underline !important;
+            }
+            
+            /* 全体的な透明度とブラー効果を無効化 */
             * {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
                 -webkit-background-clip: unset !important;
                 -webkit-text-fill-color: unset !important;
                 background-clip: unset !important;
             }
             
-            /* 特定のクラスも修正 */
-            .title {
-                background: none !important;
-                color: ${textVar || '#1b1b1b'} !important;
+            /* 特に薄く見える要素を強制的に濃くする */
+            .content-card * {
+                opacity: 1 !important;
             }
         `;
         
@@ -1265,6 +1326,7 @@ class ParasAICaptureSystem {
         
         return cssText;
     }
+    
     // パターンマッチングでCSS変数を検索
     findVariableByPattern(cssVars, patterns) {
         for (const pattern of patterns) {
