@@ -1109,13 +1109,55 @@ class ParasAICaptureSystem {
                 x: 0,
                 y: 0,
                 ignoreElements: (element) => {
-                    return element.classList.contains('paras_ai_capture_floating_btn') ||
-                           element.classList.contains('paras_ai_capture_menu') ||
-                           element.classList.contains('paras_ai_capture_modal') ||
-                           element.classList.contains('paras_ai_capture_progress') ||
-                           element.classList.contains('paras_ai_capture_notification') ||
-                           element.id === 'PING_CONTENT_DLS_POPUP' ||
-                           element.tagName === 'TEMPLATE';
+                    // クラス名での除外
+                    const classesToIgnore = [
+                        'paras_ai_capture_floating_btn',
+                        'paras_ai_capture_menu',
+                        'paras_ai_capture_modal',
+                        'paras_ai_capture_progress',
+                        'paras_ai_capture_notification'
+                    ];
+                    
+                    for (const className of classesToIgnore) {
+                        if (element.classList && element.classList.contains(className)) {
+                            console.log(`除外対象要素を検出: ${className}`);
+                            return true;
+                        }
+                    }
+                    
+                    // ID での除外
+                    const idsToIgnore = [
+                        'PING_CONTENT_DLS_POPUP',
+                        'paras_ai_capture_css_fix'
+                    ];
+                    
+                    for (const id of idsToIgnore) {
+                        if (element.id === id) {
+                            console.log(`除外対象要素を検出 (ID): ${id}`);
+                            return true;
+                        }
+                    }
+                    
+                    // タグ名での除外
+                    const tagsToIgnore = ['TEMPLATE'];
+                    if (tagsToIgnore.includes(element.tagName)) {
+                        console.log(`除外対象要素を検出 (タグ): ${element.tagName}`);
+                        return true;
+                    }
+                    
+                    // 親要素も確認（ネストされた要素への対応）
+                    let parent = element.parentElement;
+                    while (parent) {
+                        for (const className of classesToIgnore) {
+                            if (parent.classList && parent.classList.contains(className)) {
+                                console.log(`親要素が除外対象: ${className}`);
+                                return true;
+                            }
+                        }
+                        parent = parent.parentElement;
+                    }
+                    
+                    return false;
                 }
             };
             
