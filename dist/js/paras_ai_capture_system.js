@@ -1102,6 +1102,7 @@ class ParasAICaptureSystem {
         
         console.log('検出されたCSS変数:', cssVars);
         
+        // ★ここで修正されたgenerateCSSVariableOverridesが呼び出される★
         const cssText = this.generateCSSVariableOverrides(cssVars);
         
         style.textContent = cssText;
@@ -1110,7 +1111,22 @@ class ParasAICaptureSystem {
         // 強制的にスタイルを再計算させる
         document.body.offsetHeight; // リフロー強制
         
+        // h1要素に直接スタイルを適用（確実性を高める）
+        const h1Elements = document.querySelectorAll('h1, .title, .markdown-body h1');
+        const textColor = cssVars['--color_text_default'] || '#1b1b1b';
+        
+        h1Elements.forEach(h1 => {
+            h1.style.setProperty('color', textColor, 'important');
+            h1.style.setProperty('background', 'none', 'important');
+            h1.style.setProperty('-webkit-background-clip', 'unset', 'important');
+            h1.style.setProperty('-webkit-text-fill-color', 'unset', 'important');
+            h1.style.setProperty('background-clip', 'unset', 'important');
+            h1.style.setProperty('font-weight', '700', 'important');
+        });
+        
         console.log(`${Object.keys(cssVars).length}個のCSS変数を実際の値で上書きしました`);
+        console.log(`${h1Elements.length}個のh1要素のスタイルを直接修正しました`);
+        
         return style;
     }
 
@@ -1178,6 +1194,7 @@ class ParasAICaptureSystem {
         const backgroundVar = this.findVariableByPattern(cssVars, ['background', 'bg']);
         const textVar = this.findVariableByPattern(cssVars, ['text']);
         const fontVar = this.findVariableByPattern(cssVars, ['font']);
+        const primaryVar = this.findVariableByPattern(cssVars, ['primary_contrast', 'primary']);
         
         cssText += `
             html, body {
@@ -1188,6 +1205,43 @@ class ParasAICaptureSystem {
             
             .main-container, .content-card, .header {
                 ${backgroundVar ? `background-color: ${backgroundVar} !important;` : ''}
+            }
+            
+            /* h1タグ専用の修正 */
+            .title, h1, .markdown-body h1 {
+                color: ${textVar || '#1b1b1b'} !important;
+                background: none !important;
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: unset !important;
+                background-clip: unset !important;
+                font-weight: 700 !important;
+                font-size: 2rem !important;
+                line-height: 1.4 !important;
+                margin: 0 0 20px 0 !important;
+            }
+            
+            /* h2タグも修正 */
+            .source-title, h2, .markdown-body h2 {
+                color: ${textVar || '#1b1b1b'} !important;
+                background: none !important;
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: unset !important;
+                background-clip: unset !important;
+                font-weight: 600 !important;
+                font-size: 1.2rem !important;
+            }
+            
+            /* グラデーションテキストを無効化 */
+            * {
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: unset !important;
+                background-clip: unset !important;
+            }
+            
+            /* 特定のクラスも修正 */
+            .title {
+                background: none !important;
+                color: ${textVar || '#1b1b1b'} !important;
             }
         `;
         
@@ -1211,7 +1265,6 @@ class ParasAICaptureSystem {
         
         return cssText;
     }
-
     // パターンマッチングでCSS変数を検索
     findVariableByPattern(cssVars, patterns) {
         for (const pattern of patterns) {
