@@ -976,7 +976,7 @@ class ParasAICaptureSystem {
             }
 
             this.showProgress('キャプチャの準備中...', 10);
-            tempStyle = await this.prepareForCapture();
+            tempStyle = this.prepareForCapture();
             
             this.showProgress('ページ全体をキャプチャ中...', 20);
             
@@ -1012,7 +1012,7 @@ class ParasAICaptureSystem {
             }
 
             this.showProgress('キャプチャの準備中...', 10);
-            tempStyle = await this.prepareForCapture();
+            tempStyle = this.prepareForCapture();
             
             this.showProgress('表示領域をキャプチャ中...', 20);
             
@@ -1093,7 +1093,7 @@ class ParasAICaptureSystem {
     }
 
     // CSS変数を動的に検出・解決する関数
-    async prepareForCapture() {
+    prepareForCapture() {
         const style = document.createElement('style');
         style.id = 'paras_ai_capture_css_fix';
         
