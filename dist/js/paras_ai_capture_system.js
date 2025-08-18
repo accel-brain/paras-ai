@@ -948,7 +948,55 @@ class ParasAICaptureSystem {
             allowTaint: false,
             removeContainer: true,
             imageTimeout: 0,
-            logging: false
+            logging: false,
+            ignoreElements: (element) => {
+                // ページ全体キャプチャでは厳密な除外
+                const classesToIgnore = [
+                    'paras_ai_capture_floating_btn',
+                    'paras_ai_capture_menu',
+                    'paras_ai_capture_modal',
+                    'paras_ai_capture_progress',
+                    'paras_ai_capture_notification'
+                ];
+                
+                for (const className of classesToIgnore) {
+                    if (element.classList && element.classList.contains(className)) {
+                        console.log(`除外対象要素を検出: ${className}`);
+                        return true;
+                    }
+                }
+                
+                const idsToIgnore = [
+                    'PING_CONTENT_DLS_POPUP',
+                    'paras_ai_capture_css_fix'
+                ];
+                
+                for (const id of idsToIgnore) {
+                    if (element.id === id) {
+                        console.log(`除外対象要素を検出 (ID): ${id}`);
+                        return true;
+                    }
+                }
+                
+                if (element.tagName === 'TEMPLATE') {
+                    console.log(`除外対象要素を検出 (タグ): ${element.tagName}`);
+                    return true;
+                }
+                
+                // 親要素確認（ページ全体のみ）
+                let parent = element.parentElement;
+                while (parent) {
+                    for (const className of classesToIgnore) {
+                        if (parent.classList && parent.classList.contains(className)) {
+                            console.log(`親要素が除外対象: ${className}`);
+                            return true;
+                        }
+                    }
+                    parent = parent.parentElement;
+                }
+                
+                return false;
+            }
         };
         
         // 背景色設定
@@ -1109,7 +1157,7 @@ class ParasAICaptureSystem {
                 x: 0,
                 y: 0,
                 ignoreElements: (element) => {
-                    // クラス名での除外
+                    // 表示領域キャプチャでは最小限の除外のみ
                     const classesToIgnore = [
                         'paras_ai_capture_floating_btn',
                         'paras_ai_capture_menu',
@@ -1118,43 +1166,23 @@ class ParasAICaptureSystem {
                         'paras_ai_capture_notification'
                     ];
                     
-                    for (const className of classesToIgnore) {
-                        if (element.classList && element.classList.contains(className)) {
-                            console.log(`除外対象要素を検出: ${className}`);
-                            return true;
-                        }
-                    }
-                    
-                    // ID での除外
-                    const idsToIgnore = [
-                        'PING_CONTENT_DLS_POPUP',
-                        'paras_ai_capture_css_fix'
-                    ];
-                    
-                    for (const id of idsToIgnore) {
-                        if (element.id === id) {
-                            console.log(`除外対象要素を検出 (ID): ${id}`);
-                            return true;
-                        }
-                    }
-                    
-                    // タグ名での除外
-                    const tagsToIgnore = ['TEMPLATE'];
-                    if (tagsToIgnore.includes(element.tagName)) {
-                        console.log(`除外対象要素を検出 (タグ): ${element.tagName}`);
-                        return true;
-                    }
-                    
-                    // 親要素も確認（ネストされた要素への対応）
-                    let parent = element.parentElement;
-                    while (parent) {
+                    // 直接的なクラス名のみチェック（親要素の確認を削除）
+                    if (element.classList) {
                         for (const className of classesToIgnore) {
-                            if (parent.classList && parent.classList.contains(className)) {
-                                console.log(`親要素が除外対象: ${className}`);
+                            if (element.classList.contains(className)) {
                                 return true;
                             }
                         }
-                        parent = parent.parentElement;
+                    }
+                    
+                    // 特定のIDのみ除外
+                    if (element.id === 'PING_CONTENT_DLS_POPUP') {
+                        return true;
+                    }
+                    
+                    // TEMPLATEタグのみ除外
+                    if (element.tagName === 'TEMPLATE') {
+                        return true;
                     }
                     
                     return false;
