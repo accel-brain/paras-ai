@@ -974,6 +974,9 @@ class ParasAICaptureSystem {
             if (typeof html2canvas === 'undefined') {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
+
+            this.showProgress('キャプチャの準備中...', 10);
+            tempStyle = await this.prepareForCapture();
             
             this.showProgress('ページ全体をキャプチャ中...', 20);
             
@@ -994,6 +997,8 @@ class ParasAICaptureSystem {
             console.error('ページ全体キャプチャエラー:', error);
             this.hideProgress();
             this.showNotification('キャプチャに失敗しました: ' + error.message, 'error');
+        } finally {
+            this.cleanupAfterCapture(tempStyle);
         }
     }
     
@@ -1005,6 +1010,9 @@ class ParasAICaptureSystem {
             if (typeof html2canvas === 'undefined') {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
+
+            this.showProgress('キャプチャの準備中...', 10);
+            tempStyle = await this.prepareForCapture();
             
             this.showProgress('表示領域をキャプチャ中...', 20);
             
@@ -1056,6 +1064,8 @@ class ParasAICaptureSystem {
             console.error('表示領域キャプチャエラー:', error);
             this.hideProgress();
             this.showNotification('キャプチャに失敗しました: ' + error.message, 'error');
+        } finally {
+            this.cleanupAfterCapture(tempStyle);
         }
     }
     
@@ -1080,6 +1090,196 @@ class ParasAICaptureSystem {
             'success',
             4000
         );
+    }
+
+    // CSS変数を動的に検出・解決する関数
+    async prepareForCapture() {
+        const style = document.createElement('style');
+        style.id = 'paras_ai_capture_css_fix';
+        
+        const htmlStyle = window.getComputedStyle(document.documentElement);
+        const bodyStyle = window.getComputedStyle(document.body);
+        
+        // CSS変数を動的に検出
+        const cssVars = this.detectCSSVariables(htmlStyle);
+        
+        console.log('検出されたCSS変数:', cssVars);
+        
+        // CSS変数解決用のスタイルを生成
+        const cssText = this.generateCSSVariableOverrides(cssVars);
+        
+        style.textContent = cssText;
+        document.head.appendChild(style);
+        
+        // スタイル適用を待つ
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        console.log(`${Object.keys(cssVars).length}個のCSS変数を実際の値で上書きしました`);
+        return style;
+    }
+
+    // CSS変数を動的に検出する関数
+    detectCSSVariables(computedStyle) {
+        const cssVars = {};
+        
+        // html要素のstyle属性から直接CSS変数を抽出
+        const htmlElement = document.documentElement;
+        const styleAttr = htmlElement.getAttribute('style');
+        
+        if (styleAttr) {
+            // CSS変数のパターンにマッチする正規表現
+            const cssVarPattern = /--([^:]+):\s*([^;]+);?/g;
+            let match;
+            
+            while ((match = cssVarPattern.exec(styleAttr)) !== null) {
+                const varName = `--${match[1].trim()}`;
+                const varValue = match[2].trim();
+                
+                // 実際の計算値を取得
+                const computedValue = computedStyle.getPropertyValue(varName).trim();
+                
+                if (computedValue) {
+                    cssVars[varName] = computedValue;
+                } else if (varValue) {
+                    // フォールバックとして直接値を使用
+                    cssVars[varName] = varValue;
+                }
+            }
+        }
+        
+        // 追加で一般的なCSS変数パターンを検査
+        const commonPrefixes = ['color', 'font', 'background', 'text', 'primary', 'surface'];
+        
+        for (const prefix of commonPrefixes) {
+            // CSS変数名のパターンを推測して検査
+            for (let i = 0; i < 20; i++) {
+                const patterns = [
+                    `--${prefix}_default`,
+                    `--${prefix}_default_rgb`,
+                    `--color_${prefix}_default`,
+                    `--color_${prefix}_default_rgb`,
+                    `--color_b${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}_default`,
+                    `--color_bT${String.fromCharCode(65 + i)}T${String.fromCharCode(65 + i)}${i}_default`
+                ];
+                
+                for (const pattern of patterns) {
+                    const value = computedStyle.getPropertyValue(pattern).trim();
+                    if (value && !cssVars[pattern]) {
+                        cssVars[pattern] = value;
+                    }
+                }
+            }
+        }
+        
+        return cssVars;
+    }
+
+    // CSS変数を上書きするスタイルを生成
+    generateCSSVariableOverrides(cssVars) {
+        let cssText = '/* html2canvas用CSS変数解決 */\n';
+        
+        // 重要な背景色とテキスト色を優先的に処理
+        const backgroundVar = this.findVariableByPattern(cssVars, ['background', 'bg']);
+        const textVar = this.findVariableByPattern(cssVars, ['text']);
+        const fontVar = this.findVariableByPattern(cssVars, ['font']);
+        
+        cssText += `
+            html, body {
+                ${backgroundVar ? `background-color: ${backgroundVar} !important;` : ''}
+                ${textVar ? `color: ${textVar} !important;` : ''}
+                ${fontVar ? `font-family: ${fontVar} !important;` : ''}
+            }
+            
+            .main-container, .content-card, .header {
+                ${backgroundVar ? `background-color: ${backgroundVar} !important;` : ''}
+            }
+        `;
+        
+        // 全CSS変数を:root擬似クラスで上書き
+        cssText += '\n:root {\n';
+        
+        for (const [varName, varValue] of Object.entries(cssVars)) {
+            cssText += `    ${varName}: ${varValue} !important;\n`;
+        }
+        
+        cssText += '}\n';
+        
+        // 全要素に対してもCSS変数を適用
+        cssText += '\n* {\n';
+        
+        for (const [varName, varValue] of Object.entries(cssVars)) {
+            cssText += `    ${varName}: ${varValue} !important;\n`;
+        }
+        
+        cssText += '}\n';
+        
+        return cssText;
+    }
+
+    // パターンマッチングでCSS変数を検索
+    findVariableByPattern(cssVars, patterns) {
+        for (const pattern of patterns) {
+            for (const [varName, varValue] of Object.entries(cssVars)) {
+                if (varName.toLowerCase().includes(pattern.toLowerCase()) && 
+                    varValue && 
+                    varValue !== 'transparent' && 
+                    varValue !== 'rgba(0, 0, 0, 0)') {
+                    return varValue;
+                }
+            }
+        }
+        return null;
+    }
+
+    // キャプチャ後のクリーンアップ
+    cleanupAfterCapture(tempStyle) {
+        if (tempStyle && tempStyle.parentNode) {
+            tempStyle.parentNode.removeChild(tempStyle);
+        }
+    }
+
+    // 更新されたgetActualBackgroundColor
+    getActualBackgroundColor() {
+        const htmlStyle = window.getComputedStyle(document.documentElement);
+        const cssVars = this.detectCSSVariables(htmlStyle);
+        
+        // 背景色系の変数を優先的に検索
+        const backgroundPatterns = [
+            'background_default',
+            'bg_default', 
+            'surface_default',
+            'background',
+            'bg'
+        ];
+        
+        const backgroundVar = this.findVariableByPattern(cssVars, backgroundPatterns);
+        
+        if (backgroundVar) {
+            console.log('CSS変数から背景色取得:', backgroundVar);
+            return backgroundVar;
+        }
+        
+        // フォールバック処理
+        const fallbackMethods = [
+            () => window.getComputedStyle(document.body).backgroundColor,
+            () => window.getComputedStyle(document.querySelector('.main-container'))?.backgroundColor,
+            () => window.getComputedStyle(document.querySelector('.content-card'))?.backgroundColor
+        ];
+        
+        for (const method of fallbackMethods) {
+            try {
+                const color = method();
+                if (color && color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') {
+                    console.log('フォールバックから背景色取得:', color);
+                    return color;
+                }
+            } catch (e) {
+                continue;
+            }
+        }
+        
+        console.log('デフォルト背景色を使用');
+        return 'white';
     }
     
     // 画像ダウンロード
