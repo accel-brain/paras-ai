@@ -883,20 +883,22 @@ class ParasAICaptureSystem {
     
     // プログレス表示
     showProgress(message, percent) {
-        this.createProgressDisplay();
-        this.progressDisplay.classList.add('paras_ai_capture_visible');
+        //this.createProgressDisplay();
+        //this.progressDisplay.classList.add('paras_ai_capture_visible');
         
-        const progressText = this.progressDisplay.querySelector('.paras_ai_capture_progress_text');
-        const progressBar = this.progressDisplay.querySelector('.paras_ai_capture_progress_bar');
+        //const progressText = this.progressDisplay.querySelector('.paras_ai_capture_progress_text');
+        //const progressBar = this.progressDisplay.querySelector('.paras_ai_capture_progress_bar');
         
-        progressText.textContent = message;
-        progressBar.style.width = percent + '%';
+        //progressText.textContent = message;
+        //progressBar.style.width = percent + '%';
+        console.log(`進行状況: ${message} (${percent}%)`);
     }
     
     hideProgress() {
-        if (this.progressDisplay) {
-            this.progressDisplay.classList.remove('paras_ai_capture_visible');
-        }
+        //if (this.progressDisplay) {
+        //    this.progressDisplay.classList.remove('paras_ai_capture_visible');
+        //}
+        console.log('進行状況終了');
     }
     
     // 通知表示
@@ -975,6 +977,8 @@ class ParasAICaptureSystem {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
 
+            this.hideFloatingButton();
+
             // ページの一番上にスクロール
             window.scrollTo(0, 0);
             
@@ -998,6 +1002,8 @@ class ParasAICaptureSystem {
             
             this.showProgress('完了！', 100);
             setTimeout(() => this.hideProgress(), 1000);
+
+            this.showFloatingButton();
             
         } catch (error) {
             console.error('ページ全体キャプチャエラー:', error);
@@ -1017,6 +1023,8 @@ class ParasAICaptureSystem {
             if (typeof html2canvas === 'undefined') {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
+
+            this.hideFloatingButton();
             
             this.showProgress('キャプチャの準備中...', 10);
             tempStyle = this.prepareForCapture(true);
@@ -1145,6 +1153,8 @@ class ParasAICaptureSystem {
             
             this.showProgress('完了！', 100);
             setTimeout(() => this.hideProgress(), 1000);
+
+            this.showFloatingButton();
             
         } catch (error) {
             console.error('表示領域キャプチャエラー:', error);
