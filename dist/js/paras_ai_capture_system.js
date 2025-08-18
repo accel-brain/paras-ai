@@ -975,6 +975,12 @@ class ParasAICaptureSystem {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
 
+            // ページの一番上にスクロール
+            window.scrollTo(0, 0);
+            
+            // スクロール完了を待つ
+            await new Promise(resolve => setTimeout(resolve, 300));
+
             this.showProgress('キャプチャの準備中...', 10);
             tempStyle = this.prepareForCapture();
             
