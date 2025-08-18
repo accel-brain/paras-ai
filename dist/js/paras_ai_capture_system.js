@@ -948,55 +948,7 @@ class ParasAICaptureSystem {
             allowTaint: false,
             removeContainer: true,
             imageTimeout: 0,
-            logging: false,
-            ignoreElements: (element) => {
-                // ページ全体キャプチャでは厳密な除外
-                const classesToIgnore = [
-                    'paras_ai_capture_floating_btn',
-                    'paras_ai_capture_menu',
-                    'paras_ai_capture_modal',
-                    'paras_ai_capture_progress',
-                    'paras_ai_capture_notification'
-                ];
-                
-                for (const className of classesToIgnore) {
-                    if (element.classList && element.classList.contains(className)) {
-                        console.log(`除外対象要素を検出: ${className}`);
-                        return true;
-                    }
-                }
-                
-                const idsToIgnore = [
-                    'PING_CONTENT_DLS_POPUP',
-                    'paras_ai_capture_css_fix'
-                ];
-                
-                for (const id of idsToIgnore) {
-                    if (element.id === id) {
-                        console.log(`除外対象要素を検出 (ID): ${id}`);
-                        return true;
-                    }
-                }
-                
-                if (element.tagName === 'TEMPLATE') {
-                    console.log(`除外対象要素を検出 (タグ): ${element.tagName}`);
-                    return true;
-                }
-                
-                // 親要素確認（ページ全体のみ）
-                let parent = element.parentElement;
-                while (parent) {
-                    for (const className of classesToIgnore) {
-                        if (parent.classList && parent.classList.contains(className)) {
-                            console.log(`親要素が除外対象: ${className}`);
-                            return true;
-                        }
-                    }
-                    parent = parent.parentElement;
-                }
-                
-                return false;
-            }
+            logging: false
         };
         
         // 背景色設定
@@ -1157,35 +1109,13 @@ class ParasAICaptureSystem {
                 x: 0,
                 y: 0,
                 ignoreElements: (element) => {
-                    // 表示領域キャプチャでは最小限の除外のみ
-                    const classesToIgnore = [
-                        'paras_ai_capture_floating_btn',
-                        'paras_ai_capture_menu',
-                        'paras_ai_capture_modal',
-                        'paras_ai_capture_progress',
-                        'paras_ai_capture_notification'
-                    ];
-                    
-                    // 直接的なクラス名のみチェック（親要素の確認を削除）
-                    if (element.classList) {
-                        for (const className of classesToIgnore) {
-                            if (element.classList.contains(className)) {
-                                return true;
-                            }
-                        }
-                    }
-                    
-                    // 特定のIDのみ除外
-                    if (element.id === 'PING_CONTENT_DLS_POPUP') {
-                        return true;
-                    }
-                    
-                    // TEMPLATEタグのみ除外
-                    if (element.tagName === 'TEMPLATE') {
-                        return true;
-                    }
-                    
-                    return false;
+                    return element.classList.contains('paras_ai_capture_floating_btn') ||
+                           element.classList.contains('paras_ai_capture_menu') ||
+                           element.classList.contains('paras_ai_capture_modal') ||
+                           element.classList.contains('paras_ai_capture_progress') ||
+                           element.classList.contains('paras_ai_capture_notification') ||
+                           element.id === 'PING_CONTENT_DLS_POPUP' ||
+                           element.tagName === 'TEMPLATE';
                 }
             };
             
