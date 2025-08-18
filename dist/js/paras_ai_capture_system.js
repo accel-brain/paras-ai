@@ -1002,44 +1002,76 @@ class ParasAICaptureSystem {
         }
     }
     
-    // 表示領域キャプチャ（修正版）
+    // 表示領域キャプチャ
     async captureViewport() {
         this.hideCaptureMenu();
         let tempStyle = null;
+        
         try {
             if (typeof html2canvas === 'undefined') {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
             }
-
+            
             this.showProgress('キャプチャの準備中...', 10);
             tempStyle = this.prepareForCapture();
             
             this.showProgress('表示領域をキャプチャ中...', 20);
             
-            // 現在のスクロール位置を取得
-            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-                        
-            // 表示領域専用のオプション
+            // より確実なスクロール位置取得
+            const scrollX = Math.max(
+                window.pageXOffset,
+                document.documentElement.scrollLeft,
+                document.body.scrollLeft
+            ) || 0;
+            
+            const scrollY = Math.max(
+                window.pageYOffset,
+                document.documentElement.scrollTop,
+                document.body.scrollTop
+            ) || 0;
+            
+            console.log(`現在のスクロール位置: X=${scrollX}, Y=${scrollY}`);
+            console.log(`ビューポートサイズ: ${window.innerWidth} × ${window.innerHeight}`);
+            
+            // 表示領域専用の最適化されたオプション
             const options = {
                 scale: this.settings.scale,
                 useCORS: true,
                 allowTaint: false,
                 removeContainer: true,
-                imageTimeout: 0,
+                imageTimeout: 30000,
                 logging: true,
+                
+                // ビューポート設定を明確に指定
                 width: window.innerWidth,
                 height: window.innerHeight,
+                
+                // スクロール位置を複数の方法で指定
                 scrollX: scrollX,
                 scrollY: scrollY,
                 x: scrollX,
-                y: scrollY
+                y: scrollY,
+                
+                // 追加のビューポート制御
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                
+                // 要素除外設定
+                ignoreElements: (element) => {
+                    return element.classList.contains('paras_ai_capture_floating_btn') ||
+                           element.classList.contains('paras_ai_capture_menu') ||
+                           element.classList.contains('paras_ai_capture_modal') ||
+                           element.classList.contains('paras_ai_capture_progress') ||
+                           element.classList.contains('paras_ai_capture_notification') ||
+                           element.id === 'PING_CONTENT_DLS_POPUP' ||
+                           element.tagName === 'TEMPLATE';
+                }
             };
             
             // 背景色設定
             if (this.settings.backgroundColor !== 'transparent') {
                 if (this.settings.backgroundColor === 'auto') {
-                    options.backgroundColor = window.getComputedStyle(document.body).backgroundColor;
+                    options.backgroundColor = this.getActualBackgroundColor();
                 } else {
                     options.backgroundColor = this.settings.backgroundColor;
                 }
@@ -1051,7 +1083,31 @@ class ParasAICaptureSystem {
             
             this.showProgress('要素を描画中...', 50);
             
-            const canvas = await html2canvas(document.body, options);
+            // 代替手法: 一時的に body にスタイルを適用してビューポートを制限
+            const originalBodyStyle = document.body.style.cssText;
+            
+            // bodyのスクロールを一時的に調整
+            document.body.style.transform = `translate(-${scrollX}px, -${scrollY}px)`;
+            document.body.style.width = window.innerWidth + 'px';
+            document.body.style.height = window.innerHeight + 'px';
+            document.body.style.overflow = 'hidden';
+            
+            // 少し待ってからキャプチャ
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // オプション調整版でキャプチャ実行
+            const adjustedOptions = {
+                ...options,
+                scrollX: 0,  // bodyを移動させたので相対位置は0
+                scrollY: 0,
+                x: 0,
+                y: 0
+            };
+            
+            const canvas = await html2canvas(document.body, adjustedOptions);
+            
+            // 元のスタイルを復元
+            document.body.style.cssText = originalBodyStyle;
             
             this.showProgress('画像を生成中...', 80);
             
@@ -1062,13 +1118,24 @@ class ParasAICaptureSystem {
             
         } catch (error) {
             console.error('表示領域キャプチャエラー:', error);
+            
+            // エラー時も元のスタイルを復元
+            try {
+                document.body.style.cssText = originalBodyStyle;
+            } catch (e) {
+                // 復元に失敗した場合は最低限のリセット
+                document.body.style.transform = '';
+                document.body.style.width = '';
+                document.body.style.height = '';
+                document.body.style.overflow = '';
+            }
+            
             this.hideProgress();
             this.showNotification('キャプチャに失敗しました: ' + error.message, 'error');
         } finally {
             this.cleanupAfterCapture(tempStyle);
         }
-    }
-    
+    }    
     // キャプチャ処理共通部分
     async processCapture(canvas, targetName) {
         let quality = 1.0;
