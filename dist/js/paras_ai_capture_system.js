@@ -1017,7 +1017,7 @@ class ParasAICaptureSystem {
             
             this.showProgress('表示領域をキャプチャ中...', 20);
             
-            // より確実なスクロール位置取得
+            // 現在のスクロール位置を正確に取得
             const scrollX = Math.max(
                 window.pageXOffset,
                 document.documentElement.scrollLeft,
@@ -1033,7 +1033,62 @@ class ParasAICaptureSystem {
             console.log(`現在のスクロール位置: X=${scrollX}, Y=${scrollY}`);
             console.log(`ビューポートサイズ: ${window.innerWidth} × ${window.innerHeight}`);
             
-            // 表示領域専用の最適化されたオプション
+            // 一時的にビューポート領域のみを表示するdivを作成
+            const viewportDiv = document.createElement('div');
+            viewportDiv.id = 'paras_ai_capture_viewport_temp';
+            viewportDiv.style.cssText = `
+                position: absolute;
+                top: ${scrollY}px;
+                left: ${scrollX}px;
+                width: ${window.innerWidth}px;
+                height: ${window.innerHeight}px;
+                overflow: hidden;
+                z-index: 99999;
+                background: transparent;
+                pointer-events: none;
+            `;
+            
+            // body内の全要素をクローン
+            const bodyClone = document.body.cloneNode(true);
+            
+            // クローンからフローティングキャプチャ要素を除去
+            const elementsToRemove = bodyClone.querySelectorAll(`
+                .paras_ai_capture_floating_btn,
+                .paras_ai_capture_menu,
+                .paras_ai_capture_modal,
+                .paras_ai_capture_progress,
+                .paras_ai_capture_notification,
+                #PING_CONTENT_DLS_POPUP,
+                template,
+                #paras_ai_capture_css_fix
+            `);
+            
+            elementsToRemove.forEach(el => {
+                if (el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            });
+            
+            // クローンのスタイルを調整
+            bodyClone.style.cssText = `
+                position: relative;
+                top: -${scrollY}px;
+                left: -${scrollX}px;
+                margin: 0;
+                padding: 0;
+                transform: none;
+                background: transparent;
+            `;
+            
+            viewportDiv.appendChild(bodyClone);
+            document.body.appendChild(viewportDiv);
+            
+            // 少し待ってからキャプチャ
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            this.showProgress('要素を描画中...', 50);
+            
+            // 作成したviewportDiv要素をキャプチャ
             const options = {
                 scale: this.settings.scale,
                 useCORS: true,
@@ -1041,22 +1096,12 @@ class ParasAICaptureSystem {
                 removeContainer: true,
                 imageTimeout: 30000,
                 logging: true,
-                
-                // ビューポート設定を明確に指定
                 width: window.innerWidth,
                 height: window.innerHeight,
-                
-                // スクロール位置を複数の方法で指定
-                scrollX: scrollX,
-                scrollY: scrollY,
-                x: scrollX,
-                y: scrollY,
-                
-                // 追加のビューポート制御
-                windowWidth: window.innerWidth,
-                windowHeight: window.innerHeight,
-                
-                // 要素除外設定
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0,
                 ignoreElements: (element) => {
                     return element.classList.contains('paras_ai_capture_floating_btn') ||
                            element.classList.contains('paras_ai_capture_menu') ||
@@ -1081,33 +1126,12 @@ class ParasAICaptureSystem {
             
             console.log('html2canvasオプション:', options);
             
-            this.showProgress('要素を描画中...', 50);
+            const canvas = await html2canvas(viewportDiv, options);
             
-            // 代替手法: 一時的に body にスタイルを適用してビューポートを制限
-            const originalBodyStyle = document.body.style.cssText;
-            
-            // bodyのスクロールを一時的に調整
-            document.body.style.transform = `translate(-${scrollX}px, -${scrollY}px)`;
-            document.body.style.width = window.innerWidth + 'px';
-            document.body.style.height = window.innerHeight + 'px';
-            document.body.style.overflow = 'hidden';
-            
-            // 少し待ってからキャプチャ
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // オプション調整版でキャプチャ実行
-            const adjustedOptions = {
-                ...options,
-                scrollX: 0,  // bodyを移動させたので相対位置は0
-                scrollY: 0,
-                x: 0,
-                y: 0
-            };
-            
-            const canvas = await html2canvas(document.body, adjustedOptions);
-            
-            // 元のスタイルを復元
-            document.body.style.cssText = originalBodyStyle;
+            // 一時的なviewportDivを削除
+            if (viewportDiv.parentNode) {
+                viewportDiv.parentNode.removeChild(viewportDiv);
+            }
             
             this.showProgress('画像を生成中...', 80);
             
@@ -1119,15 +1143,10 @@ class ParasAICaptureSystem {
         } catch (error) {
             console.error('表示領域キャプチャエラー:', error);
             
-            // エラー時も元のスタイルを復元
-            try {
-                document.body.style.cssText = originalBodyStyle;
-            } catch (e) {
-                // 復元に失敗した場合は最低限のリセット
-                document.body.style.transform = '';
-                document.body.style.width = '';
-                document.body.style.height = '';
-                document.body.style.overflow = '';
+            // エラー時も一時的な要素を削除
+            const tempViewport = document.getElementById('paras_ai_capture_viewport_temp');
+            if (tempViewport && tempViewport.parentNode) {
+                tempViewport.parentNode.removeChild(tempViewport);
             }
             
             this.hideProgress();
@@ -1135,7 +1154,7 @@ class ParasAICaptureSystem {
         } finally {
             this.cleanupAfterCapture(tempStyle);
         }
-    }    
+    }
     // キャプチャ処理共通部分
     async processCapture(canvas, targetName) {
         let quality = 1.0;
