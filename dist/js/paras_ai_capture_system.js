@@ -968,7 +968,7 @@ class ParasAICaptureSystem {
     // ページ全体キャプチャ
     async capturePageFull() {
         this.hideCaptureMenu();
-        
+        let tempStyle = null;
         try {
             // html2canvasライブラリの存在確認
             if (typeof html2canvas === 'undefined') {
@@ -1005,7 +1005,7 @@ class ParasAICaptureSystem {
     // 表示領域キャプチャ（修正版）
     async captureViewport() {
         this.hideCaptureMenu();
-        
+        let tempStyle = null;
         try {
             if (typeof html2canvas === 'undefined') {
                 throw new Error('html2canvas ライブラリが読み込まれていません');
