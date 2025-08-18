@@ -1013,7 +1013,7 @@ class ParasAICaptureSystem {
             }
             
             this.showProgress('キャプチャの準備中...', 10);
-            tempStyle = this.prepareForCapture();
+            tempStyle = this.prepareForCapture(true);
             
             this.showProgress('表示領域をキャプチャ中...', 20);
             
@@ -1179,7 +1179,7 @@ class ParasAICaptureSystem {
     }
 
     // CSS変数を動的に検出・解決する関数
-    prepareForCapture() {
+    prepareForCapture(isViewportCapture = false) {
         const style = document.createElement('style');
         style.id = 'paras_ai_capture_css_fix';
         
@@ -1196,46 +1196,46 @@ class ParasAICaptureSystem {
         // 強制的にスタイルを再計算させる
         document.body.offsetHeight; // リフロー強制
         
-        // ★ここから下が新しく追加する部分 ★
-        
-        // content-card要素の直接修正
-        const contentCards = document.querySelectorAll('.content-card');
-        contentCards.forEach(card => {
-            card.style.setProperty('background', 'white', 'important');
-            card.style.setProperty('background-color', 'white', 'important');
-            card.style.setProperty('opacity', '1', 'important');
-            card.style.setProperty('backdrop-filter', 'none', 'important');
-        });
-        
-        // h1要素に直接スタイルを適用
-        const h1Elements = document.querySelectorAll('h1, .title, .markdown-body h1');
-        const textColor = cssVars['--color_text_default'] || 'rgb(27, 27, 27)';
-        
-        h1Elements.forEach(h1 => {
-            h1.style.setProperty('color', textColor, 'important');
-            h1.style.setProperty('background', 'none', 'important');
-            h1.style.setProperty('background-image', 'none', 'important');
-            h1.style.setProperty('-webkit-background-clip', 'unset', 'important');
-            h1.style.setProperty('-webkit-text-fill-color', 'unset', 'important');
-            h1.style.setProperty('background-clip', 'unset', 'important');
-            h1.style.setProperty('font-weight', '700', 'important');
-            h1.style.setProperty('opacity', '1', 'important');
-        });
-        
-        // 全テキスト要素の不透明度を強制設定
-        const textElements = document.querySelectorAll('.content-text, .source-text, .user_info, .source-title');
-        textElements.forEach(elem => {
-            elem.style.setProperty('opacity', '1', 'important');
-        });
-        
-        // ★ここまでが新しく追加する部分 ★
+        // ★表示領域キャプチャの場合のみ直接スタイル適用★
+        if (isViewportCapture) {
+            // content-card要素の直接修正
+            const contentCards = document.querySelectorAll('.content-card');
+            contentCards.forEach(card => {
+                card.style.setProperty('background', 'white', 'important');
+                card.style.setProperty('background-color', 'white', 'important');
+                card.style.setProperty('opacity', '1', 'important');
+                card.style.setProperty('backdrop-filter', 'none', 'important');
+            });
+            
+            // h1要素に直接スタイルを適用
+            const h1Elements = document.querySelectorAll('h1, .title, .markdown-body h1');
+            const textColor = cssVars['--color_text_default'] || 'rgb(27, 27, 27)';
+            
+            h1Elements.forEach(h1 => {
+                h1.style.setProperty('color', textColor, 'important');
+                h1.style.setProperty('background', 'none', 'important');
+                h1.style.setProperty('background-image', 'none', 'important');
+                h1.style.setProperty('-webkit-background-clip', 'unset', 'important');
+                h1.style.setProperty('-webkit-text-fill-color', 'unset', 'important');
+                h1.style.setProperty('background-clip', 'unset', 'important');
+                h1.style.setProperty('font-weight', '700', 'important');
+                h1.style.setProperty('opacity', '1', 'important');
+            });
+            
+            // 全テキスト要素の不透明度を強制設定
+            const textElements = document.querySelectorAll('.content-text, .source-text, .user_info, .source-title');
+            textElements.forEach(elem => {
+                elem.style.setProperty('opacity', '1', 'important');
+            });
+            
+            console.log(`表示領域キャプチャ用の直接スタイル適用を実行しました`);
+        }
         
         console.log(`${Object.keys(cssVars).length}個のCSS変数を実際の値で上書きしました`);
-        console.log(`${h1Elements.length}個のh1要素のスタイルを直接修正しました`);
-        console.log(`${contentCards.length}個のcontent-card要素を修正しました`);
         
         return style;
     }
+    
     // CSS変数を動的に検出する関数
     detectCSSVariables(computedStyle) {
         const cssVars = {};
