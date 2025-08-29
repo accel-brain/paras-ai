@@ -1022,28 +1022,33 @@ async function displayResultsWithPagination(results, keyword) {
 }
 
 // ページネーション付きで最新投稿順の結果を表示する関数
-async function displayRecentPosts() {
-    showLoading(); // ローディング表示を追加
+async function displayRecentPosts(pageNumber = null) {
+    showLoading();
     
     try {
-        const recentPages = await getSortedPages();
-        currentResults = recentPages;
-        isSearchMode = false;
-        currentPage = 1;
+        // ページ番号が指定されていない場合のみ初期化
+        if (pageNumber === null) {
+            const recentPages = await getSortedPages();
+            currentResults = recentPages;
+            isSearchMode = false;
+            currentPage = 1;
+        } else {
+            // ページ番号が指定されている場合は更新しない
+            currentPage = pageNumber;
+        }
         
         const resultsGrid = document.getElementById('resultsGrid');
         const resultsCount = document.getElementById('resultsCount');
         const noResults = document.getElementById('noResults');
         const resultsInfoH2 = document.querySelector('#resultsInfo h2');
         
-        // h2のテキストを変更
         if (resultsInfoH2) {
             resultsInfoH2.textContent = '最近の分析事例';
         }
         
-        resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
+        resultsCount.textContent = `最新の投稿: ${currentResults.length}件`;
         
-        if (recentPages.length === 0) {
+        if (currentResults.length === 0) {
             resultsGrid.innerHTML = '';
             noResults.style.display = 'block';
             hidePagination();
@@ -1053,13 +1058,11 @@ async function displayRecentPosts() {
 
         noResults.style.display = 'none';
         
-        // ページネーション用のデータ計算
-        const totalPages = Math.ceil(recentPages.length / itemsPerPage);
+        const totalPages = Math.ceil(currentResults.length / itemsPerPage);
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        const currentPageResults = recentPages.slice(startIndex, endIndex);
+        const currentPageResults = currentResults.slice(startIndex, endIndex);
         
-        // 各結果に対してタイトル、キーワード、著者情報を並列取得
         const resultPromises = currentPageResults.map(async (page) => {
             const [title, topKeywords, authorInfo] = await Promise.all([
                 getPageTitle(page.file_path),
@@ -1081,9 +1084,8 @@ async function displayRecentPosts() {
         const resultCards = await Promise.all(resultPromises);
         resultsGrid.innerHTML = resultCards.join('');
         
-        // ページネーションコントロールを表示
         if (totalPages > 1) {
-            showPagination(currentPage, totalPages, recentPages.length);
+            showPagination(currentPage, totalPages, currentResults.length);
         } else {
             hidePagination();
         }
@@ -1094,7 +1096,6 @@ async function displayRecentPosts() {
         console.error('最新投稿表示エラー:', error);
         hideLoading();
         
-        // エラー時の表示
         const resultsGrid = document.getElementById('resultsGrid');
         const noResults = document.getElementById('noResults');
         resultsGrid.innerHTML = '';
@@ -1160,18 +1161,18 @@ async function goToNextPage() {
         currentPage++;
         if (isSearchMode) {
             if (currentUserId) {
-                // ユーザー検索モードの場合
                 await displayUserResults(currentResults, currentUserId);
             } else {
-                // キーワード検索モードの場合
                 await displayResultsWithPagination(currentResults, currentKeyword);
             }
         } else {
-            await displayRecentPosts();
+            // 修正: currentPageを渡す
+            await displayRecentPosts(currentPage);
         }
         scrollToResults();
     }
 }
+
 
 // 前のページへ
 async function goToPreviousPage() {
@@ -1179,14 +1180,13 @@ async function goToPreviousPage() {
         currentPage--;
         if (isSearchMode) {
             if (currentUserId) {
-                // ユーザー検索モードの場合
                 await displayUserResults(currentResults, currentUserId);
             } else {
-                // キーワード検索モードの場合
                 await displayResultsWithPagination(currentResults, currentKeyword);
             }
         } else {
-            await displayRecentPosts();
+            // 修正: currentPageを渡す
+            await displayRecentPosts(currentPage);
         }
         scrollToResults();
     }
