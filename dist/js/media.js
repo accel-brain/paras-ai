@@ -1022,81 +1022,124 @@ async function displayResultsWithPagination(results, keyword) {
 }
 
 // ページネーション付きで最新投稿順の結果を表示する関数
-async function displayRecentPosts() {            
-    const recentPages = await getSortedPages();
-    currentResults = recentPages;
-    isSearchMode = false;
-    currentPage = 1;
+async function displayRecentPosts() {
+    showLoading(); // ローディング表示を追加
     
-    const resultsGrid = document.getElementById('resultsGrid');
-    const resultsCount = document.getElementById('resultsCount');
-    const noResults = document.getElementById('noResults');
-    const resultsInfoH2 = document.querySelector('#resultsInfo h2');
-    
-    // h2のテキストを変更
-    if (resultsInfoH2) {
-        resultsInfoH2.textContent = '最近の分析事例';
-    }
-    
-    resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
-    
-    if (recentPages.length === 0) {
+    try {
+        const recentPages = await getSortedPages();
+        currentResults = recentPages;
+        isSearchMode = false;
+        currentPage = 1;
+        
+        const resultsGrid = document.getElementById('resultsGrid');
+        const resultsCount = document.getElementById('resultsCount');
+        const noResults = document.getElementById('noResults');
+        const resultsInfoH2 = document.querySelector('#resultsInfo h2');
+        
+        // h2のテキストを変更
+        if (resultsInfoH2) {
+            resultsInfoH2.textContent = '最近の分析事例';
+        }
+        
+        resultsCount.textContent = `最新の投稿: ${recentPages.length}件`;
+        
+        if (recentPages.length === 0) {
+            resultsGrid.innerHTML = '';
+            noResults.style.display = 'block';
+            hidePagination();
+            hideLoading();
+            return;
+        }
+
+        noResults.style.display = 'none';
+        
+        // ページネーション用のデータ計算
+        const totalPages = Math.ceil(recentPages.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentPageResults = recentPages.slice(startIndex, endIndex);
+        
+        // 各結果に対してタイトル、キーワード、著者情報を並列取得
+        const resultPromises = currentPageResults.map(async (page) => {
+            const [title, topKeywords, authorInfo] = await Promise.all([
+                getPageTitle(page.file_path),
+                getTopKeywordsForPath(page.file_path),
+                getAuthorInfo(page.file_path)
+            ]);
+            
+            return `
+                <a href="${page.file_path}" class="result-card">
+                    <div class="result-title">${title || 'タイトルなし'}</div>
+                    ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
+                    <div class="result-keywords">
+                        ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
+                    </div>
+                </a>
+            `;
+        });
+        
+        const resultCards = await Promise.all(resultPromises);
+        resultsGrid.innerHTML = resultCards.join('');
+        
+        // ページネーションコントロールを表示
+        if (totalPages > 1) {
+            showPagination(currentPage, totalPages, recentPages.length);
+        } else {
+            hidePagination();
+        }
+        
+        hideLoading();
+        
+    } catch (error) {
+        console.error('最新投稿表示エラー:', error);
+        hideLoading();
+        
+        // エラー時の表示
+        const resultsGrid = document.getElementById('resultsGrid');
+        const noResults = document.getElementById('noResults');
         resultsGrid.innerHTML = '';
         noResults.style.display = 'block';
-        hidePagination();
-        return;
-    }
-
-    noResults.style.display = 'none';
-    
-    // ページネーション用のデータ計算
-    const totalPages = Math.ceil(recentPages.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentPageResults = recentPages.slice(startIndex, endIndex);
-    
-    // 各結果に対してタイトル、キーワード、著者情報を並列取得
-    const resultPromises = currentPageResults.map(async (page) => {
-        const [title, topKeywords, authorInfo] = await Promise.all([
-            getPageTitle(page.file_path),
-            getTopKeywordsForPath(page.file_path),
-            getAuthorInfo(page.file_path)
-        ]);
-        
-        return `
-            <a href="${page.file_path}" class="result-card">
-                <div class="result-title">${title || 'タイトルなし'}</div>
-                ${authorInfo ? `<div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">${authorInfo}</div>` : ''}
-                <div class="result-keywords">
-                    ${topKeywords.map(kw => `<span class="keyword-tag" onclick="searchByKeywordTag(event, '${kw}')">${kw}</span>`).join('')}
-                </div>
-            </a>
-        `;
-    });
-    
-    const resultCards = await Promise.all(resultPromises);
-    resultsGrid.innerHTML = resultCards.join('');
-    
-    // ページネーションコントロールを表示
-    if (totalPages > 1) {
-        showPagination(currentPage, totalPages, recentPages.length);
-    } else {
         hidePagination();
     }
 }
 
 // ページネーションコントロールを表示
 function showPagination(currentPageNum, totalPages, totalItems) {
+    // 入力値の検証
+    if (totalPages <= 1 || currentPageNum < 1 || currentPageNum > totalPages) {
+        hidePagination();
+        return;
+    }
+    
     const paginationControls = document.getElementById('paginationControls');
     const prevBtn = document.getElementById('prevPageBtn');
     const nextBtn = document.getElementById('nextPageBtn');
     const paginationInfo = document.getElementById('paginationInfo');
     
+    // 要素の存在確認
+    if (!paginationControls || !prevBtn || !nextBtn || !paginationInfo) {
+        console.error('ページネーション要素が見つかりません');
+        return;
+    }
+    
     paginationControls.style.display = 'flex';
     
-    // ボタンの有効/無効を設定
-    prevBtn.disabled = currentPageNum === 1;
-    nextBtn.disabled = currentPageNum === totalPages;
+    // ボタンの有効/無効を明示的に設定
+    if (currentPageNum <= 1) {
+        prevBtn.disabled = true;
+        prevBtn.setAttribute('disabled', 'disabled');
+    } else {
+        prevBtn.disabled = false;
+        prevBtn.removeAttribute('disabled');
+    }
+    
+    if (currentPageNum >= totalPages) {
+        nextBtn.disabled = true;
+        nextBtn.setAttribute('disabled', 'disabled');
+    } else {
+        nextBtn.disabled = false;
+        nextBtn.removeAttribute('disabled');
+    }
     
     // ページ情報を更新
     const startItem = (currentPageNum - 1) * itemsPerPage + 1;
